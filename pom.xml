@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.5.3</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>de.umr.raft</groupId>
+	<artifactId>raft-log-replication-demo</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>Raft Log Replication Demo</name>
+	<description>Demo for Log Replication using Raft Consensus Algorithm (Using Apache Ratis as Implementation)</description>
+	<properties>
+		<java.version>11</java.version>
+		<!-- Apache Ratis version -->
+		<ratis.version>2.1.0</ratis.version>
+		<!-- Apache Ratis thirdparty version -->
+		<ratis.thirdparty.version>0.7.0</ratis.thirdparty.version>
+		<frontend-maven-plugin.version>1.6</frontend-maven-plugin.version>
+		<node.version>v12.16.3</node.version>
+		<yarn.version>v1.22.4</yarn.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- need old version of codahale metrics as Ratis does not support v4, but spring includes it -->
+		<dependency>
+			<groupId>io.dropwizard.metrics</groupId>
+			<artifactId>metrics-core</artifactId>
+			<version>3.2.2</version>
+		</dependency>
+
+		<!-- Apache Ratis Raft dependencies -->
+		<dependency>
+			<groupId>org.apache.ratis</groupId>
+			<artifactId>ratis-common</artifactId>
+			<version>${ratis.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.ratis</groupId>
+			<artifactId>ratis-client</artifactId>
+			<version>${ratis.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.ratis</groupId>
+			<artifactId>ratis-server</artifactId>
+			<version>${ratis.version}</version>
+		</dependency>
+        <dependency>
+            <groupId>org.apache.ratis</groupId>
+            <artifactId>ratis-grpc</artifactId>
+            <version>${ratis.version}</version>
+        </dependency>
+
+		<!-- Thymeleaf templating engine for server-side rendering -->
+		<dependency>
+			<groupId>org.thymeleaf</groupId>
+			<artifactId>thymeleaf</artifactId>
+			<version>3.0.11.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.thymeleaf</groupId>
+			<artifactId>thymeleaf-spring5</artifactId>
+			<version>3.0.11.RELEASE</version>
+		</dependency>
+    </dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.github.eirslett</groupId>
+				<artifactId>frontend-maven-plugin</artifactId>
+				<version>1.12.0</version>
+				<executions>
+					<execution>
+						<!-- optional: you don't really need execution ids, but it looks nice in your build log. -->
+						<id>install node and yarn</id>
+						<goals>
+							<goal>install-node-and-yarn</goal>
+						</goals>
+						<!-- optional: default phase is "generate-resources" -->
+						<phase>generate-resources</phase>
+					</execution>
+					<execution>
+						<id>yarn install</id>
+						<goals>
+							<goal>yarn</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<nodeVersion>${node.version}</nodeVersion>
+					<yarnVersion>${yarn.version}</yarnVersion>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
