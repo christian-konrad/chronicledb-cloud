@@ -35,6 +35,9 @@ build/
 # Node dependencies
 node_modules
 
+# Node instance for maven
+node
+
 # package-lock.json (use yarn.lock instead)
 package-lock.json
 

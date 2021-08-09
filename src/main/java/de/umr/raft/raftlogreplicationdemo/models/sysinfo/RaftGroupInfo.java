@@ -22,6 +22,8 @@ public class RaftGroupInfo {
     @Getter @NonNull private final long roleSince;
     @Getter @NonNull private final boolean isStorageHealthy;
 
+    // TODO state machine info of this group
+
     public static RaftGroupInfo of(GroupInfoReply raftGroupInfoReply) {
         val raftGroup = raftGroupInfoReply.getGroup();
         val raftGroupId = raftGroup.getGroupId();
