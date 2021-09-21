@@ -1,5 +1,6 @@
 package de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.statemachines;
 
+import de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.statemachines.messages.metadata.MetadataOperationMessage;
 import org.apache.ratis.proto.RaftProtos;
 import org.apache.ratis.protocol.Message;
 import org.apache.ratis.protocol.RaftGroupId;
@@ -11,36 +12,51 @@ import org.apache.ratis.statemachine.TransactionContext;
 import org.apache.ratis.statemachine.impl.BaseStateMachine;
 import org.apache.ratis.statemachine.impl.SimpleStateMachineStorage;
 import org.apache.ratis.statemachine.impl.SingleFileSnapshotInfo;
+import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
+import org.apache.ratis.util.AutoCloseableLock;
 import org.apache.ratis.util.JavaUtils;
+import org.springframework.util.SerializationUtils;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * State machine implementation for Counter server application. This class
- * maintain a {@link AtomicInteger} object as a state and accept two commands:
- * GET and INCREMENT, GET is a ReadOnly command which will be handled by
- * {@code query} method however INCREMENT is a transactional command which
- * will be handled by {@code applyTransaction}.
- */
-public class CounterStateMachine extends BaseStateMachine {
+public class ClusterManagementStateMachine extends BaseStateMachine {
     private final SimpleStateMachineStorage storage =
             new SimpleStateMachineStorage();
-    private AtomicInteger counter = new AtomicInteger(0);
+    // private AtomicInteger counter = new AtomicInteger(0);
+
+    // TODO maps/lists of nodes, raftGroups, node health etc
+
+    // TODO evolve to MetaStateMachine, not only metadata
+    // TODO or have additional ClusterManagementStateMachine with additional raft group to keep this lean and tidy
+    // TODO implement health checks based on heartbeats
+
+    // a map of key value pairs per scope (e.g. node id)
+    // TODO should better have a validated map with valid types/schemas?
+
+    // TODO need AtomicReference? Or even some KV in-mem database? Or some custom object?
+    // private AtomicReference<Map<String, Map<String, String>>> metadata = new AtomicReference<>(new HashMap<>());
+    private final Map<String, Map<String, String>> metadata = new ConcurrentHashMap<>();
+
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
+
+    private AutoCloseableLock readLock() {
+        return AutoCloseableLock.acquire(lock.readLock());
+    }
+
+    private AutoCloseableLock writeLock() {
+        return AutoCloseableLock.acquire(lock.writeLock());
+    }
 
     /**
-     * initialize the state machine by initialize the state machine storage and
+     * initialize the state machine by initializing the state machine storage and
      * calling the load method which reads the last applied command and restore it
-     * in counter object)
+     * in the map)
      *
      * @param server      the current server information
      * @param groupId     the cluster groupId
@@ -65,7 +81,18 @@ public class CounterStateMachine extends BaseStateMachine {
      */
     @Override
     public void reinitialize() throws IOException {
+        close();
         loadSnapshot(storage.getLatestSnapshot());
+    }
+
+    void reset() {
+        metadata.clear();
+        setLastAppliedTermIndex(null);
+    }
+
+    @Override
+    public void close() {
+        reset();
     }
 
     /**
@@ -75,17 +102,22 @@ public class CounterStateMachine extends BaseStateMachine {
      */
     @Override
     public long takeSnapshot() {
-        //get the last applied index
-        final TermIndex last = getLastAppliedTermIndex();
+        final Map<String, Map<String, String>> copy;
+        final TermIndex last;
+        try(AutoCloseableLock readLock = readLock()) {
+            copy = new HashMap<>(metadata);
+            last = getLastAppliedTermIndex();
+        }
 
         //create a file with a proper name to store the snapshot
         final File snapshotFile =
                 storage.getSnapshotFile(last.getTerm(), last.getIndex());
+        LOG.info("Taking a snapshot to file {}", snapshotFile);
 
         //serialize the counter object and write it into the snapshot file
         try (ObjectOutputStream out = new ObjectOutputStream(
                 new BufferedOutputStream(new FileOutputStream(snapshotFile)))) {
-            out.writeObject(counter);
+            out.writeObject(copy);
         } catch (IOException ioe) {
             LOG.warn("Failed to write snapshot file \"" + snapshotFile
                     + "\", last applied index=" + last);
@@ -109,7 +141,7 @@ public class CounterStateMachine extends BaseStateMachine {
             return RaftLog.INVALID_LOG_INDEX;
         }
 
-        //check the existance of the snapshot file
+        //check the existence of the snapshot file
         final File snapshotFile = snapshot.getFile().getPath().toFile();
         if (!snapshotFile.exists()) {
             LOG.warn("The snapshot file {} does not exist for snapshot {}",
@@ -122,14 +154,13 @@ public class CounterStateMachine extends BaseStateMachine {
         final TermIndex last =
                 SimpleStateMachineStorage.getTermIndexFromSnapshotFile(snapshotFile);
 
-        //read the file and cast it to the AtomicInteger and set the counter
-        try (ObjectInputStream in = new ObjectInputStream(
-                new BufferedInputStream(new FileInputStream(snapshotFile)))) {
-            //set the last applied termIndex to the termIndex of the snapshot
+        //read the file, cast it to the Map and set it
+        try (AutoCloseableLock writeLock = writeLock();
+            ObjectInputStream in = new ObjectInputStream(
+                    new BufferedInputStream(new FileInputStream(snapshotFile)))) {
+            // if (reload) reset(); // TODO remove, unused
             setLastAppliedTermIndex(last);
-
-            //read, cast and set the counter
-            counter = JavaUtils.cast(in.readObject());
+            metadata.putAll(JavaUtils.cast(in.readObject()));
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
@@ -146,12 +177,15 @@ public class CounterStateMachine extends BaseStateMachine {
     @Override
     public CompletableFuture<Message> query(Message request) {
         String msg = request.getContent().toString(Charset.defaultCharset());
+        // TODO allow querying of single keys using MetaDataGetOperation
         if (!msg.equals("GET")) {
             return CompletableFuture.completedFuture(
                     Message.valueOf("Invalid Command"));
         }
+        byte[] metadataBytes = SerializationUtils.serialize(metadata);
+
         return CompletableFuture.completedFuture(
-                Message.valueOf(counter.toString()));
+                Message.valueOf(ByteString.copyFrom(metadataBytes)));
     }
 
     /**
@@ -163,30 +197,35 @@ public class CounterStateMachine extends BaseStateMachine {
     @Override
     public CompletableFuture<Message> applyTransaction(TransactionContext trx) {
         final RaftProtos.LogEntryProto entry = trx.getLogEntry();
+        final MetadataOperationMessage metaDataOperationMessage =
+                new MetadataOperationMessage(entry.getStateMachineLogEntry().getLogData());
 
-        //check if the command is valid
-        String logData = entry.getStateMachineLogEntry().getLogData()
-                .toString(Charset.defaultCharset());
-        if (!logData.equals("INCREMENT")) {
-            return CompletableFuture.completedFuture(
-                    Message.valueOf("Invalid Command"));
-        }
+        // TODO may catch exception and return message to the user if message is invalid
+
         //update the last applied term and index
         final long index = entry.getIndex();
-        updateLastAppliedTermIndex(entry.getTerm(), index);
 
-        //actual execution of the command: increment the counter
-        counter.incrementAndGet();
-
-        //return the new value of the counter to the client
-        final CompletableFuture<Message> f =
-                CompletableFuture.completedFuture(Message.valueOf(counter.toString()));
-
-        //if leader, log the incremented value and it's log index
-        if (trx.getServerRole() == RaftProtos.RaftPeerRole.LEADER) {
-            LOG.info("{}: Increment to {}", index, counter.toString());
+        try(AutoCloseableLock writeLock = writeLock()) {
+            // actual execution of the command
+            metaDataOperationMessage.apply(metadata);
+            updateLastAppliedTermIndex(entry.getTerm(), index);
         }
 
-        return f;
+        // confirm execution (TODO or else return error)
+        final CompletableFuture<Message> response =
+                CompletableFuture.completedFuture(Message.valueOf("OK"));
+
+        // log what happened
+        final RaftProtos.RaftPeerRole role = trx.getServerRole();
+        if (role == RaftProtos.RaftPeerRole.LEADER) {
+            LOG.info("{}:{}-{}: {}", role, getId(), index, metaDataOperationMessage);
+        } else {
+            LOG.debug("{}:{}-{}: {}", role, getId(), index, metaDataOperationMessage);
+        }
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("{}-{}: metadata={}", getId(), index, metadata);
+        }
+
+        return response;
     }
 }

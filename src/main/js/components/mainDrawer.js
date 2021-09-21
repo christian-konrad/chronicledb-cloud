@@ -7,10 +7,10 @@ import Divider from '@material-ui/core/Divider';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import InboxIcon from '@material-ui/icons/MoveToInbox';
-import MailIcon from '@material-ui/icons/Mail';
-import { Network_420, EdgeNodeAlt20, Calculation20 } from '@carbon/icons-react';
-import {Link} from "react-router-dom";
+import { Network_420, EdgeNodeAlt20, Calculation20, DataStructured20, MessageQueue20 } from '@carbon/icons-react';
+import { Link, useLocation } from "react-router-dom";
+import {ListSubheader} from "@material-ui/core";
+import ReplicatedKeyValueStorePage from "../pages/replicatedKeyValueStore";
 
 const drawerWidth = 240;
 
@@ -31,6 +31,16 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
+const DrawerListItem = ({ id, text, to, icon }) => {
+    const location = useLocation();
+    return (
+        <ListItem component={Link} to={to} button key={id} selected={to === location.pathname}>
+            <ListItemIcon>{icon}</ListItemIcon>
+            <ListItemText primary={text}/>
+        </ListItem>
+    )
+};
+
 export default function MainDrawer() {
     const classes = useStyles();
 
@@ -45,21 +55,39 @@ export default function MainDrawer() {
             <Toolbar/>
             <div className={classes.drawerContainer}>
                 <List>
-                    <ListItem component={Link} to="/admin/sys-info" button key="sys-info">
-                        <ListItemIcon><EdgeNodeAlt20 /></ListItemIcon>
-                        <ListItemText primary="General system info"/>
-                    </ListItem>
-                    <ListItem component={Link} to="/admin/raft-groups" button key="raft-groups">
-                        <ListItemIcon><Network_420 /></ListItemIcon>
-                        <ListItemText primary="Raft groups"/>
-                    </ListItem>
+                    <DrawerListItem
+                        id="sys-info"
+                        text="General system info"
+                        to="/admin/sys-info"
+                        icon={<EdgeNodeAlt20 />} />
+                    <DrawerListItem
+                        id="raft-groups"
+                        text="Raft groups"
+                        to="/admin/raft-groups"
+                        icon={<Network_420 />} />
                 </List>
                 <Divider/>
-                <List>
-                    <ListItem button key="replicated-counter">
-                        <ListItemIcon><Calculation20 /></ListItemIcon>
-                        <ListItemText primary="Replicated counter"/>
-                    </ListItem>
+                <List
+                    subheader={
+                        <ListSubheader component="div">
+                            Replication
+                        </ListSubheader>
+                    }>
+                    <DrawerListItem
+                        id="replicated-counter"
+                        text="Counter"
+                        to="/admin/replicated-counter"
+                        icon={<Calculation20 />} />
+                    <DrawerListItem
+                        id="replicated-key-value-store"
+                        text="Key-value store"
+                        to="/admin/replicated-kv-store"
+                        icon={<DataStructured20 />} />
+                    <DrawerListItem
+                        id="replicated-log"
+                        text="Append-only log"
+                        to="/admin/replicated-log"
+                        icon={<MessageQueue20 />} />
                 </List>
             </div>
         </Drawer>

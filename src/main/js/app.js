@@ -10,6 +10,10 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import {createTheme} from "@material-ui/core";
 import { ThemeProvider } from '@material-ui/core/styles';
 import RaftGroupsPage from "./pages/raftGroups";
+import NodeInfoPage from "./pages/nodeInfo";
+import ReplicatedCounterPage from "./pages/replicatedCounter";
+import ReplicatedKeyValueStorePage from "./pages/replicatedKeyValueStore";
+import ReplicatedAppendOnlyLogPage from "./pages/replicatedAppendOnlyLog";
 
 const theme = createTheme({
     props: {
@@ -74,9 +78,14 @@ class App extends React.Component {
             <ThemeProvider theme={theme}>
                 <Router>
                     <Switch>
-                        <Route path='/admin' exact={true} component={HomePage}/>
+                        <Route path='/admin' exact={true} component={SystemInfoPage}/>
                         <Route path='/admin/sys-info' exact={true} component={SystemInfoPage}/>
                         <Route path='/admin/raft-groups' exact={true} component={RaftGroupsPage}/>
+                        <Route path='/admin/sys-info/nodes/:nodeId' component={NodeInfoPage}/>
+                        {/* TODO not admin paths, is actual app */}
+                        <Route path='/admin/replicated-counter' exact={true} component={ReplicatedCounterPage}/>
+                        <Route path='/admin/replicated-kv-store' exact={true} component={ReplicatedKeyValueStorePage}/>
+                        <Route path='/admin/replicated-log' exact={true} component={ReplicatedAppendOnlyLogPage}/>
                     </Switch>
                 </Router>
             </ThemeProvider>

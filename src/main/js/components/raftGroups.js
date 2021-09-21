@@ -23,7 +23,7 @@ const useStyles = theme => ({
     },
     itemLabel: {
         minWidth: 240,
-        display: 'inline-block',
+        display: 'inline-block'
     },
     subGroupItemLabel: {
         minWidth: 240,
@@ -31,20 +31,35 @@ const useStyles = theme => ({
         fontSize: 18
     },
     accordionDetails: {
-        display: 'block',
+        display: 'block'
     },
+    serverTitle: {
+        marginBottom: 14,
+        fontSize: "16px"
+    },
+    stateMachineTitle: {
+        margin: "14px 0",
+        fontSize: "14px",
+        fontWeight: "bold"
+    }
 });
 
-const InfoListItem = ({ label, content, classes }) =>
+const InfoListItem = ({ label, content, title, classes }) =>
     <ListItem className={classes.listItem}>
         <ListItemText className={classes.listItemText}
                       primary={<span className={classes.itemLabel}>{label}</span>}
-                      secondary={content} />
+                      secondary={content}
+                      title={title} />
     </ListItem>;
+
+const formatStateMachineClass = stateMachineClass => {
+    const stateMachineClassPackages = stateMachineClass.split('.');
+    return stateMachineClassPackages[stateMachineClassPackages.length - 1];
+}
 
 const RaftGroupAccordion = ({ raftGroup, classes }) => {
 
-    const { name, uuid, leaderId, currentLeaderTerm, selfRole, roleSince, storageHealthy, nodes } = raftGroup;
+    const { name, groupId, uuid, leaderId, currentLeaderTerm, selfRole, roleSince, storageHealthy, nodes, stateMachineClass } = raftGroup;
 
     return <Accordion variant="outlined">
         <AccordionSummary
@@ -58,9 +73,11 @@ const RaftGroupAccordion = ({ raftGroup, classes }) => {
             <div>
                 <List>
                     <InfoListItem classes={classes} label="UUID" content={uuid} />
+                    <InfoListItem classes={classes} label="Group ID" content={groupId} />
+                    <InfoListItem classes={classes} label="State machine class" title={stateMachineClass} content={formatStateMachineClass(stateMachineClass)} />
                     <InfoListItem classes={classes} label="Leader ID" content={leaderId} />
-                    <InfoListItem classes={classes} label="Current leader" content={currentLeaderTerm} />
-                    <InfoListItem classes={classes} label="Current role of this node" content={selfRole} />
+                    <InfoListItem classes={classes} label="Current leader term" content={currentLeaderTerm} />
+                    {/*<InfoListItem classes={classes} label="Current role of this node" content={selfRole} /> TODO displays wrong info*/}
                     <InfoListItem classes={classes} label="Has role since" content={`${roleSince}ms`} />
                     <InfoListItem classes={classes} label="Storage health" content={storageHealthy ? 'Healthy' : 'Problematic'} />
                 </List>
@@ -69,6 +86,19 @@ const RaftGroupAccordion = ({ raftGroup, classes }) => {
         </AccordionDetails>
     </Accordion>
 };
+
+const RaftGroupStateMachineBlock = ({ stateMachineClass, server, raftGroups, classes }) =>
+    <>
+        <Typography variant="h4" className={classes.stateMachineTitle}>{formatStateMachineClass(stateMachineClass)}</Typography>
+        {raftGroups.filter(raftGroup => raftGroup.serverName === server && raftGroup.stateMachineClass === stateMachineClass).map(raftGroup => <RaftGroupAccordion raftGroup={raftGroup} classes={classes} /> )}
+    </>;
+
+const RaftGroupServerBlock = ({ server, raftGroups, classes }) =>
+    <>
+        <Typography variant="h3" className={classes.serverTitle}>Server: <b>{server}</b></Typography>
+        {[...new Set(raftGroups.filter(raftGroup => raftGroup.serverName === server).map(raftGroup => raftGroup.stateMachineClass))]
+            .map(stateMachineClass => <RaftGroupStateMachineBlock server={server} stateMachineClass={stateMachineClass} raftGroups={raftGroups} classes={classes} />)}
+    </>;
 
 class RaftGroups extends Component {
 
@@ -88,9 +118,11 @@ class RaftGroups extends Component {
         const { classes } = this.props;
         const { raftGroups } = this.state.systemInfo;
 
+        const servers = [...new Set(raftGroups.map(raftGroup => raftGroup.serverName))];
+
         return (
             <>
-                {raftGroups.map(raftGroup => <RaftGroupAccordion raftGroup={raftGroup} classes={classes} /> )}
+                {servers.map(server => <RaftGroupServerBlock server={server} raftGroups={raftGroups} classes={classes} />)}
             </>
         )
     }

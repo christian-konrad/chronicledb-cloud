@@ -38,7 +38,7 @@ public class CounterStateMachine extends BaseStateMachine {
     private AtomicInteger counter = new AtomicInteger(0);
 
     /**
-     * initialize the state machine by initialize the state machine storage and
+     * initialize the state machine by initializing the state machine storage and
      * calling the load method which reads the last applied command and restore it
      * in counter object)
      *

@@ -20,13 +20,13 @@ public class SimpleCounterController {
     private final AtomicInteger counter = new AtomicInteger();
 
     @GetMapping(value = "/api/counter", produces = MediaType.TEXT_PLAIN_VALUE)
-    public String getCounter() throws IOException, ExecutionException, InterruptedException {
-        return counterService.getCounter().get().toString();
+    public String getCounter(@PathVariable String id) throws IOException, ExecutionException, InterruptedException {
+        return counterService.getCounter(id).get().toString();
     }
 
     @PostMapping("/api/counter/increment")
     @ResponseStatus(value = HttpStatus.OK)
-    public void increment() throws IOException {
-        counterService.increment().join();
+    public void increment(@PathVariable String id) throws IOException {
+        counterService.increment(id).join();
     }
 }

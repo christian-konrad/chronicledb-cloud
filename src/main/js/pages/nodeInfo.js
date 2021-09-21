@@ -1,33 +1,33 @@
 import React, { Component } from "react";
-import { Link } from 'react-router-dom';
-import ApiClient from "../api/apiClient";
+import { Link, useParams } from 'react-router-dom';
 import MainLayout from "../layouts/mainLayout";
-import {Card, CardContent, Container} from "@material-ui/core";
+import {Breadcrumbs, Card, CardContent, Container, Typography} from "@material-ui/core";
 import SystemInfo from "../components/systemInfo";
 import ErrorBoundary from "../components/error/errorBoundary";
+import NodeInfo from "../components/nodeInfo";
 
-class SystemInfoPage extends Component {
+export default function NodeInfoPage() {
 
-    constructor(props) {
-        super(props);
-    }
+    const { nodeId } = useParams();
 
-    render() {
-        return (
-            <MainLayout>
-                <Container maxWidth="md">
-                    <h2>System Info</h2>
-                    <Card variant="outlined">
-                        <CardContent>
-                            <ErrorBoundary>
-                                <SystemInfo />
-                            </ErrorBoundary>
-                        </CardContent>
-                    </Card>
-                </Container>
-            </MainLayout>
-        );
-    }
+    return (
+        <MainLayout>
+            <Container maxWidth="md">
+                <Breadcrumbs aria-label="breadcrumb">
+                    <Link color="inherit" to="/admin/sys-info">
+                        General system info
+                    </Link>
+                    <Typography color="textPrimary">Node info</Typography>
+                </Breadcrumbs>
+                <h2>Node Info - {nodeId}</h2>
+                <Card variant="outlined">
+                    <CardContent>
+                        <ErrorBoundary>
+                            <NodeInfo nodeId={nodeId} />
+                        </ErrorBoundary>
+                    </CardContent>
+                </Card>
+            </Container>
+        </MainLayout>
+    );
 }
-
-export default SystemInfoPage;

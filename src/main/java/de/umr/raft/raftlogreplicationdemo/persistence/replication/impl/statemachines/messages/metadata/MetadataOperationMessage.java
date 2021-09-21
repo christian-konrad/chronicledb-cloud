@@ -1,4 +1,4 @@
-package de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.statemachines.messages;
+package de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.statemachines.messages.metadata;
 
 import lombok.Getter;
 import org.apache.ratis.protocol.Message;
@@ -6,23 +6,24 @@ import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 import static org.apache.ratis.util.ProtoUtils.toByteString;
 
-public class MetaDataPropagateMessage implements Message {
+public class MetadataOperationMessage implements Message {
     public static final Charset UTF8 = StandardCharsets.UTF_8;
 
-    @Getter private final MetaDataOperation metaDataOperation;
+    @Getter private final MetadataOperation metaDataOperation;
 
-    public MetaDataPropagateMessage(MetaDataOperation metaDataOperation) {
+    public MetadataOperationMessage(MetadataOperation metaDataOperation) {
         this.metaDataOperation = metaDataOperation;
     }
 
-    public MetaDataPropagateMessage(byte[] buf, int offset) {
-        metaDataOperation = MetaDataOperation.Utils.bytes2MetaDataOperation(buf, offset);
+    public MetadataOperationMessage(byte[] buf, int offset) {
+        metaDataOperation = MetadataOperation.Utils.bytes2MetaDataOperation(buf, offset);
     }
 
-    public MetaDataPropagateMessage(ByteString bytes) {
+    public MetadataOperationMessage(ByteString bytes) {
         this(bytes.toByteArray(), 0);
     }
 
@@ -37,5 +38,9 @@ public class MetaDataPropagateMessage implements Message {
     @Override
     public String toString() {
         return metaDataOperation.toString();
+    }
+
+    public void apply(Map<String, Map<String, String>> metadata) {
+        metaDataOperation.apply(metadata); // TODO may return status info
     }
 }

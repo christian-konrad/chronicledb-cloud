@@ -13,4 +13,13 @@ public class SystemInfo {
     @Getter private final String currentNodeStoragePath;
     @Getter private final List<NodeInfo> nodes;
     @Getter private final List<RaftGroupInfo> raftGroups;
+
+    // TODO
+    /*
+    raftServer.getDivision().getRaftServerMetrics()
+    raftServer.getDivision().getInfo()
+    raftServer.getDivision().getRaftConf()
+    raftServer.getDivision().getStateMachine()
+    raftServer.getDivision().getRaftLog()
+     */
 }

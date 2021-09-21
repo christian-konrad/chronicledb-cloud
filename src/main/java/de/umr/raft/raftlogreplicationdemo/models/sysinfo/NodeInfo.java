@@ -1,12 +1,12 @@
 package de.umr.raft.raftlogreplicationdemo.models.sysinfo;
 
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.val;
+import de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.facades.ReplicatedMetadataMap;
+import lombok.*;
 import org.apache.ratis.protocol.RaftPeer;
 
-@RequiredArgsConstructor(staticName = "of")
+import java.util.concurrent.ExecutionException;
+
+@RequiredArgsConstructor(staticName = "of") @Builder
 public class NodeInfo {
 
     private final static String UNKNOWN_HTTP_PORT = "?";
@@ -14,11 +14,73 @@ public class NodeInfo {
     @Getter @NonNull private final String id;
     @Getter @NonNull private final String host;
     @Getter private final String httpPort;
-    @Getter @NonNull private final String raftPort;
+    @Getter @NonNull private final String metadataPort;
+    @Getter private final String replicationPort;
+    @Getter private final String storagePath;
+    @Getter private final String localHostAddress;
+    @Getter private final String localHostName;
+    @Getter private final String remoteHostAddress;
+    @Getter private final String remoteHostName;
+    @Getter private final String osName;
+    @Getter private final String osVersion;
+    @Getter private final String springVersion;
+    @Getter private final String jdkVersion;
+    @Getter private final String javaVersion;
+    @Getter private final String totalDiskSpace;
+    @Getter private final String usableDiskSpace;
+    @Getter private final String heartbeat;
 
     public static NodeInfo of(RaftPeer raftPeer) {
         val raftPeerHostAndPort = raftPeer.getAddress().split(":");
-        return new NodeInfo(raftPeer.getId().toString(), raftPeerHostAndPort[0], UNKNOWN_HTTP_PORT, raftPeerHostAndPort[1]);
+
+        return new NodeInfoBuilder()
+                .id(raftPeer.getId().toString())
+                .host(raftPeerHostAndPort[0])
+                .httpPort(UNKNOWN_HTTP_PORT)
+                .metadataPort(raftPeerHostAndPort[1])
+                .build();
+    }
+
+    public static NodeInfo of(ReplicatedMetadataMap replicatedMetaDataMap) throws ExecutionException, InterruptedException {
+        val nodeId = replicatedMetaDataMap.get("nodeId");
+        val localHostAddress = replicatedMetaDataMap.get("localHostAddress");
+        val httpPort = replicatedMetaDataMap.get("httpPort");
+        val metadataPort = replicatedMetaDataMap.get("metadataPort");
+        val replicationPort = replicatedMetaDataMap.get("replicationPort");
+        val storagePath = replicatedMetaDataMap.get("storagePath");
+        val localHostName = replicatedMetaDataMap.get("localHostName");
+        val remoteHostAddress = replicatedMetaDataMap.get("remoteHostAddress");
+        val remoteHostName = replicatedMetaDataMap.get("remoteHostName");
+        val osName = replicatedMetaDataMap.get("osName");
+        val osVersion = replicatedMetaDataMap.get("osVersion");
+        val springVersion = replicatedMetaDataMap.get("springVersion");
+        val jdkVersion = replicatedMetaDataMap.get("jdkVersion");
+        val javaVersion = replicatedMetaDataMap.get("javaVersion");
+        val totalDiskSpace = replicatedMetaDataMap.get("totalDiskSpace");
+        val usableDiskSpace = replicatedMetaDataMap.get("usableDiskSpace");
+        val heartbeat = replicatedMetaDataMap.get("heartbeat");
+
+        // TODO more params
+        return new NodeInfoBuilder()
+                .id(nodeId)
+                .host(localHostAddress)
+                .httpPort(httpPort)
+                .metadataPort(metadataPort)
+                .replicationPort(replicationPort)
+                .storagePath(storagePath)
+                .localHostAddress(localHostAddress)
+                .localHostName(localHostName)
+                .remoteHostAddress(remoteHostAddress)
+                .remoteHostName(remoteHostName)
+                .osName(osName)
+                .osVersion(osVersion)
+                .springVersion(springVersion)
+                .jdkVersion(jdkVersion)
+                .javaVersion(javaVersion)
+                .totalDiskSpace(totalDiskSpace)
+                .usableDiskSpace(usableDiskSpace)
+                .heartbeat(heartbeat)
+                .build();
     }
 
     @Override
@@ -27,5 +89,10 @@ public class NodeInfo {
         if (obj == null || obj.getClass() != getClass()) return false;
 
         return id.equals(((NodeInfo) obj).getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
     }
 }

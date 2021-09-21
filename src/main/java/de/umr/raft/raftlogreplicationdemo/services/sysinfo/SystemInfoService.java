@@ -4,6 +4,8 @@ import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.NodeInfo;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.SystemInfo;
+import de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.ClusterMetadataReplicationClient;
+import de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.facades.ReplicatedMetadataMap;
 import de.umr.raft.raftlogreplicationdemo.persistence.replication.sysinfo.RaftSystemInfoClient;
 import lombok.val;
 import org.apache.ratis.protocol.GroupInfoReply;
@@ -12,30 +14,41 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.function.Function;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class SystemInfoService {
 
+    private final RaftSystemInfoClient raftSystemInfoClient;
+    private final RaftConfig raftConfig;
+    private final ClusterMetadataReplicationClient clusterMetadataReplicationClient;
+
     @Autowired
-    RaftSystemInfoClient raftSystemInfoClient;
+    public SystemInfoService(RaftConfig raftConfig, RaftSystemInfoClient raftSystemInfoClient, ClusterMetadataReplicationClient clusterMetadataReplicationClient) {
+        this.raftConfig = raftConfig;
+        this.raftSystemInfoClient = raftSystemInfoClient;
+        this.clusterMetadataReplicationClient = clusterMetadataReplicationClient;
+    }
 
-    @Autowired RaftConfig raftConfig;
-
-    public List<RaftGroupInfo> getRaftGroups() throws IOException {
-        val raftGroups = raftSystemInfoClient.listRaftGroups();
-        return raftGroups.getGroupIds().stream().map(raftGroupId -> {
-            GroupInfoReply raftGroupInfo = null;
+    public List<RaftGroupInfo> getRaftGroups() throws IOException, ExecutionException, InterruptedException {
+        val raftGroupIds = raftSystemInfoClient.listRaftGroups();
+        return raftGroupIds.stream().map(raftGroupId -> {
+            RaftGroupInfo raftGroupInfo = null;
             try {
                 raftGroupInfo = raftSystemInfoClient.getRaftGroupInfo(raftGroupId);
-            } catch (IOException e) {
+            } catch (IOException | ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }
-            return RaftGroupInfo.of(raftGroupInfo);
-        }).collect(Collectors.toList());
+            return raftGroupInfo;
+        }).filter(Objects::nonNull).collect(Collectors.toList());
         // return raftGroups.getGroupIds().stream().map(raftGroupId -> RaftGroupInfo.of(raftGroupId.toString(), raftGroupId.getUuid().toString())).collect(Collectors.toList());
+    }
+
+    public NodeInfo getNodeInfo(String nodeId) throws ExecutionException, InterruptedException {
+        val replicatedMetaDataMap = ReplicatedMetadataMap.of(nodeId, this.clusterMetadataReplicationClient);
+        return NodeInfo.of(replicatedMetaDataMap);
     }
 
     public List<NodeInfo> getNodes(List<RaftGroupInfo> raftGroupInfos) throws IOException {
@@ -44,7 +57,7 @@ public class SystemInfoService {
                 .distinct().collect(Collectors.toList());
     }
 
-    public SystemInfo getSystemInfo() throws IOException {
+    public SystemInfo getSystemInfo() throws IOException, ExecutionException, InterruptedException {
         val raftGroups = getRaftGroups();
         val nodes = getNodes(raftGroups);
         val currentNodeId = getCurrentNodeId();

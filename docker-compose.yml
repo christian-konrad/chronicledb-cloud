@@ -1,0 +1,41 @@
+version: '3'
+
+# We already have a default network using the bridge adapter, so we don't need to redefine it.
+
+services:
+  n1:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: raft-log-replication-demo:latest
+    command: "--node-id=n1 --server.address=n1.demo.raft.umr.de --server.port=9999 --metadata-port=6000 --replication-port=6050 --storage=/tmp/raft-demo --peers=n1:n1.demo.raft.umr.de:9999,n2:n2.demo.raft.umr.de:9999,n3:n3.demo.raft.umr.de:9999"
+    ports:
+     - 8080:9999
+    networks:
+      default:
+        aliases:
+          - n1.demo.raft.umr.de
+  n2:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: raft-log-replication-demo:latest
+    command: "--node-id=n2 --server.address=n2.demo.raft.umr.de --server.port=9999 --metadata-port=6000 --replication-port=6050 --storage=/tmp/raft-demo --peers=n1:n1.demo.raft.umr.de:9999,n2:n2.demo.raft.umr.de:9999,n3:n3.demo.raft.umr.de:9999"
+    ports:
+      - 8081:9999
+    networks:
+      default:
+        aliases:
+          - n2.demo.raft.umr.de
+  n3:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: raft-log-replication-demo:latest
+    command: "--node-id=n3 --server.address=n3.demo.raft.umr.de --server.port=9999 --metadata-port=6000 --replication-port=6050 --storage=/tmp/raft-demo --peers=n1:n1.demo.raft.umr.de:9999,n2:n2.demo.raft.umr.de:9999,n3:n3.demo.raft.umr.de:9999"
+    ports:
+      - 8082:9999
+    networks:
+      default:
+        aliases:
+          - n3.demo.raft.umr.de
