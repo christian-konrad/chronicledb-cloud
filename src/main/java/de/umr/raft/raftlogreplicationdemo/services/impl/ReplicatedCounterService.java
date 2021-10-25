@@ -3,13 +3,10 @@ package de.umr.raft.raftlogreplicationdemo.services.impl;
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.models.counter.CreateCounterRequest;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
-import de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.ClusterManagementMultiRaftServer;
-import de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.ClusterMetadataReplicationClient;
-import de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.CounterReplicationClient;
-import de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.facades.ReplicatedMetadataMap;
-import de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.statemachines.CounterStateMachine;
-import de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.statemachines.providers.CounterStateMachineProvider;
-import de.umr.raft.raftlogreplicationdemo.persistence.replication.sysinfo.RaftSystemInfoClient;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterManagementMultiRaftServer;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.CounterReplicationClient;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.CounterStateMachine;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.CounterStateMachineProvider;
 import de.umr.raft.raftlogreplicationdemo.services.ICounterService;
 import de.umr.raft.raftlogreplicationdemo.services.sysinfo.SystemInfoService;
 import lombok.val;
@@ -17,19 +14,14 @@ import org.apache.ratis.protocol.Message;
 import org.apache.ratis.protocol.RaftClientReply;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.w3c.dom.css.Counter;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.channels.MulticastChannel;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service

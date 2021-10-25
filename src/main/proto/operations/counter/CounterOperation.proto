@@ -1,0 +1,22 @@
+syntax = "proto3";
+option java_package = "de.umr.raft.raftlogreplicationdemo.replication.api.proto";
+option java_generate_equals_and_hash = true;
+option java_multiple_files = true;
+package raftlogreplicationdemo.replication.api.proto.operations.counter;
+import "operations/OperationResultStatus.proto";
+
+enum CounterOperationType {
+    NULL = 0; // null/noop operation that does nothing
+    INCREMENT = 1;
+    GET = 2;
+}
+
+message CounterOperationProto {
+    CounterOperationType operation_type = 1;
+}
+
+message CounterOperationResultProto {
+    CounterOperationType operation_type = 1;
+    sint32 counter_value = 2;
+    OperationResultStatus status = 3;
+}

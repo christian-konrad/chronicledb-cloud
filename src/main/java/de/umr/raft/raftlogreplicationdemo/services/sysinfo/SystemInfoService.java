@@ -4,11 +4,11 @@ import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.NodeInfo;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.SystemInfo;
-import de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.ClusterMetadataReplicationClient;
-import de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.facades.ReplicatedMetadataMap;
-import de.umr.raft.raftlogreplicationdemo.persistence.replication.sysinfo.RaftSystemInfoClient;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterMetadataReplicationClient;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.ReplicatedMetadataMap;
+import de.umr.raft.raftlogreplicationdemo.replication.sysinfo.RaftSystemInfoClient;
 import lombok.val;
-import org.apache.ratis.protocol.GroupInfoReply;
+import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -46,7 +46,7 @@ public class SystemInfoService {
         // return raftGroups.getGroupIds().stream().map(raftGroupId -> RaftGroupInfo.of(raftGroupId.toString(), raftGroupId.getUuid().toString())).collect(Collectors.toList());
     }
 
-    public NodeInfo getNodeInfo(String nodeId) throws ExecutionException, InterruptedException {
+    public NodeInfo getNodeInfo(String nodeId) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
         val replicatedMetaDataMap = ReplicatedMetadataMap.of(nodeId, this.clusterMetadataReplicationClient);
         return NodeInfo.of(replicatedMetaDataMap);
     }

@@ -1,8 +1,9 @@
 package de.umr.raft.raftlogreplicationdemo.models.sysinfo;
 
-import de.umr.raft.raftlogreplicationdemo.persistence.replication.impl.facades.ReplicatedMetadataMap;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.ReplicatedMetadataMap;
 import lombok.*;
 import org.apache.ratis.protocol.RaftPeer;
+import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 
 import java.util.concurrent.ExecutionException;
 
@@ -41,7 +42,7 @@ public class NodeInfo {
                 .build();
     }
 
-    public static NodeInfo of(ReplicatedMetadataMap replicatedMetaDataMap) throws ExecutionException, InterruptedException {
+    public static NodeInfo of(ReplicatedMetadataMap replicatedMetaDataMap) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
         val nodeId = replicatedMetaDataMap.get("nodeId");
         val localHostAddress = replicatedMetaDataMap.get("localHostAddress");
         val httpPort = replicatedMetaDataMap.get("httpPort");

@@ -80,13 +80,34 @@
 			<artifactId>thymeleaf-spring5</artifactId>
 			<version>3.0.11.RELEASE</version>
 		</dependency>
+
+		<!-- Protocol buffers for java -->
+		<!-- no external dependency needed as it is included in ratis, -->
+		<!-- but we need to replace dependencies created by protoc on maven build -->
+		<!-- This is achieved using com.google.code.maven-replacer-plugin -->
+		<!-- <dependency>-->
+		<!--	<groupId>com.google.protobuf</groupId>-->
+		<!--	<artifactId>protobuf-java</artifactId>-->
+		<!--	<version>3.18.1</version>-->
+		<!-- </dependency>-->
     </dependencies>
 
 	<build>
+		<extensions>
+			<extension>
+				<groupId>kr.motd.maven</groupId>
+				<artifactId>os-maven-plugin</artifactId>
+				<version>1.5.0.Final</version>
+			</extension>
+		</extensions>
+
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<!-- version shouldn't be needed, but IntelliJ has problems.
+				See https://stackoverflow.com/questions/64639836/plugin-org-springframework-bootspring-boot-maven-plugin-not-found -->
+				<version>${project.parent.version}</version>
 				<configuration>
 					<excludes>
 						<exclude>
@@ -120,6 +141,64 @@
 				<configuration>
 					<nodeVersion>${node.version}</nodeVersion>
 					<yarnVersion>${yarn.version}</yarnVersion>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.xolstice.maven.plugins</groupId>
+				<artifactId>protobuf-maven-plugin</artifactId>
+				<version>0.5.1</version>
+				<extensions>true</extensions>
+				<configuration>
+					<includes>
+						<include>**/*.proto</include>
+					</includes>
+					<!-- Version 3.12.0 is mandatory to support shaded protobuf version of ratis. -->
+					<!-- See https://github.com/apache/ratis/blob/master/BUILDING.md on this -->
+					<!-- On ratis updates, one must have to update this dependency, too. -->
+					<!-- TODO get rid of this shaded dependency somehow and use latest version -->
+					<protocArtifact>com.google.protobuf:protoc:3.12.0:exe:${os.detected.classifier}</protocArtifact>
+					<!-- Next line enforces generation of package/dir tree in generated-sources -->
+					<!-- <outputDirectory>${project.build.directory}/generated-sources</outputDirectory>-->
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>compile</goal>
+							<goal>test-compile</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- in generated protobuf sources, replace official proto package with shaded one from ratis -->
+			<plugin>
+				<groupId>com.google.code.maven-replacer-plugin</groupId>
+				<artifactId>replacer</artifactId>
+				<version>1.5.3</version>
+				<executions>
+					<execution>
+						<phase>process-sources</phase>
+						<goals>
+							<goal>replace</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<!-- <basedir>${project.build.directory}/generated-sources/de/umr/raft/raftlogreplicationdemo/replication/api/proto</basedir>-->
+					<basedir>${project.build.directory}/generated-sources/protobuf</basedir>
+					<includes>
+						<include>**/*.java</include>
+					</includes>
+					<replacements>
+						<replacement>
+							<token>([^\.])com.google</token>
+							<value>$1org.apache.ratis.thirdparty.com.google</value>
+						</replacement>
+						<replacement>
+							<token>([^\.])io.grpc</token>
+							<value>$1org.apache.ratis.thirdparty.io.grpc</value>
+						</replacement>
+					</replacements>
 				</configuration>
 			</plugin>
 		</plugins>

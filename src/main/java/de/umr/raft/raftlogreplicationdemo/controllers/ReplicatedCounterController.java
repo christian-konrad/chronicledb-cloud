@@ -16,6 +16,10 @@ import java.util.concurrent.ExecutionException;
 @RestController
 public class ReplicatedCounterController {
 
+    // TODO may use protobuf instead of json and beans to make it faster
+    // and provide easy-to-use client api
+    // TODO or provide full gRPC controllers instead of HTTP/REST
+
     @Autowired
     ReplicatedCounterService counterService;
 

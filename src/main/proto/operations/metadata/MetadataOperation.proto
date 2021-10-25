@@ -1,0 +1,36 @@
+syntax = "proto3";
+option java_package = "de.umr.raft.raftlogreplicationdemo.replication.api.proto";
+// option java_outer_classname = "MetadataProtos";
+option java_generate_equals_and_hash = true;
+option java_multiple_files = true;
+package raftlogreplicationdemo.replication.api.proto.operations.metadata;
+import "operations/OperationResultStatus.proto";
+
+enum MetadataOperationType {
+    NULL = 0; // null/noop operation that does nothing
+    SET = 1;
+    DELETE = 2;
+    GET = 3;
+    GET_ALL_FOR_SCOPE = 4;
+    GET_ALL = 5;
+}
+
+message MetadataOperationProto {
+    string scope_id = 1; // scope can be a certain area of interest or a node
+    string key = 2;
+    string value = 3; // may be empty (default) if is DELETE operation
+    MetadataOperationType operation_type = 4;
+}
+
+message MetadataOperationResultProto {
+    MetadataOperationType operation_type = 1;
+    MetadataOperationResultMapProto result = 2; // value if SET; previous value if DELETE; current value if GET; the whole map for a given scope if GET_ALL_FOR_SCOPE etc
+    OperationResultStatus status = 3;
+}
+
+message MetadataOperationResultMapProto {
+    bool is_leaf = 1;
+    map<string, MetadataOperationResultMapProto> nodes = 2;
+    string leaf_value = 3;
+    bool is_null = 4; // as protobuf does not support nulls, we need a flag
+}

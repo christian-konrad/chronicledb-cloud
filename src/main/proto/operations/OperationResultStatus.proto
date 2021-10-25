@@ -1,0 +1,13 @@
+syntax = "proto3";
+option java_package = "de.umr.raft.raftlogreplicationdemo.replication.api.proto";
+// option java_outer_classname = "MetadataProtos";
+option java_generate_equals_and_hash = true;
+option java_multiple_files = true;
+package raftlogreplicationdemo.replication.api.proto.operations;
+
+enum OperationResultStatus {
+  UNDEFINED = 0;
+  OK = 1;
+  ERROR = 2;
+  CANCELLED = 3;
+}

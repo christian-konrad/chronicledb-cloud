@@ -1,0 +1,33 @@
+version: '3'
+
+# TODO port defaults in .properties so we do not need them here
+# TODO make server address obsolete: if not specified, use node-id
+
+services:
+  n1:
+    build:
+      context: ./
+      dockerfile: Dockerfile_debug
+    image: raft-log-replication-demo:latest
+    command: java -jar /raft-log-replication-demo.jar --node-id=n1 --server.address=n1 --server.port=9999 --metadata-port=6000 --replication-port=6050 --storage=/tmp/raft-demo --peers=n1:6000,n2:6000,n3:6000
+    ports:
+     - 8080:9999
+     - 8765:8765
+     #env_file: # TODO
+     #  - ./.env
+  n2:
+    build:
+      context: ./
+      dockerfile: Dockerfile_debug
+    image: raft-log-replication-demo:latest
+    command: java -jar /raft-log-replication-demo.jar --node-id=n2 --server.address=n2 --server.port=9999 --metadata-port=6000 --replication-port=6050 --storage=/tmp/raft-demo --peers=n1:6000,n2:6000,n3:6000
+    ports:
+      - 8081:9999
+  n3:
+    build:
+      context: ./
+      dockerfile: Dockerfile_debug
+    image: raft-log-replication-demo:latest
+    command: java -jar /raft-log-replication-demo.jar --node-id=n3 --server.address=n3 --server.port=9999 --metadata-port=6000 --replication-port=6050 --storage=/tmp/raft-demo --peers=n1:6000,n2:6000,n3:6000
+    ports:
+      - 8082:9999

@@ -1,6 +1,7 @@
 package de.umr.raft.raftlogreplicationdemo.config;
 
 import lombok.Getter;
+import lombok.val;
 import org.apache.ratis.protocol.RaftGroup;
 import org.apache.ratis.protocol.RaftGroupId;
 import org.apache.ratis.protocol.RaftPeer;
@@ -44,11 +45,20 @@ public class RaftConfig {
     @Value("${replication-port}")
     @Getter private String replicationPort;
 
+    private String[] getPeerIdAndAddress(String peerDefinition) {
+        // format can be <PEER_ID>:<HOST>:<PORT> or <HOST>:<PORT> where HOST == PEER_ID
+        val countOfDoublePoints = peerDefinition.chars().filter(ch -> ch == ':').count();
+        if (countOfDoublePoints == 1) {
+            return new String[]{peerDefinition.split(":")[0], peerDefinition};
+        }
+        return peerDefinition.split(":", 2);
+    }
+
     public List<RaftPeer> getManagementPeersList() {
         List<String> peerDefinitions = Arrays.asList(getManagementPeers().split(","));
 
         List<String[]> peerIdsAndAddresses = peerDefinitions.stream()
-                .map(peerAddress -> peerAddress.split(":", 2))
+                .map(this::getPeerIdAndAddress)
                 .collect(Collectors.toList());
 
         return peerIdsAndAddresses.stream()
