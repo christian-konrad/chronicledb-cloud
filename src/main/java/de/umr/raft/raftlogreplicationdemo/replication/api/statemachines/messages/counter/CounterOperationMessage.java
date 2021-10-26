@@ -2,10 +2,7 @@ package de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.message
 
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.CounterOperationResultProto;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.CounterOperationType;
-import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperationResultProto;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.OperationExecutionResult;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.counter.CounterOperationExecutor;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.metadata.MetadataOperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.ExecutableMessage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

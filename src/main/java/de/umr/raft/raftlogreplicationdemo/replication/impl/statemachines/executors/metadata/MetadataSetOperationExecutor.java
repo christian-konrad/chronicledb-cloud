@@ -1,8 +1,6 @@
 package de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.metadata;
 
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.*;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.OperationExecutionResult;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.metadata.MetadataOperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.metadata.MetadataQueryOperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.metadata.MetadataTransactionOperationExecutor;
 import lombok.Getter;

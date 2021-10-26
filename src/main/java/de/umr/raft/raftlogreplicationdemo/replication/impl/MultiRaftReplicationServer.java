@@ -3,6 +3,7 @@ package de.umr.raft.raftlogreplicationdemo.replication.impl;
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
 import de.umr.raft.raftlogreplicationdemo.replication.IReplicationServer;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.ReplicatedMetadataMap;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.StateMachineProvider;
 import lombok.val;
@@ -141,7 +142,11 @@ public abstract class MultiRaftReplicationServer implements IReplicationServer.R
                 .setProperties(properties)
                 .setServerId(currentPeer.getId())
                 .setStateMachineRegistry(raftGroupId -> {
-                    // TODO must be called on runtime!!!
+                    // TODO must be called on runtime as state machine for groups registered later are not recognized
+                    // it is just called on startup
+                    // TODO check how this can be called on runtime after a new group is added
+                    // TODO Need seperate management and app logic server so mngmt server can handle even server restarts.
+                    // not possible to obtain state machine providers before server startup as server is needed for that...
                     try {
                         val stateMachineProvider = getStateMachineProviders().stream().filter(provider ->
                                 raftGroupId.equals(provider.getRaftGroupId(getServerName()))).findFirst().orElseThrow();
@@ -282,7 +287,6 @@ public abstract class MultiRaftReplicationServer implements IReplicationServer.R
         raftGroupsSet.add(groupId);
         raftGroupsString = String.join(";", raftGroupsSet);
 
-        // TODO value gets too long too fast. Need actual management state machine for that
         replicatedMetaDataMap.put("groups", raftGroupsString);
 
         // add more info about raft group here

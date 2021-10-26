@@ -3,15 +3,20 @@ package de.umr.raft.raftlogreplicationdemo.services.impl;
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.models.counter.CreateCounterRequest;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
+import de.umr.raft.raftlogreplicationdemo.replication.api.proto.CounterOperationResultProto;
+import de.umr.raft.raftlogreplicationdemo.replication.api.proto.OperationResultStatus;
+import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.counter.CounterOperationMessage;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterManagementMultiRaftServer;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.CounterReplicationClient;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.CounterReplicationClient;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.CounterStateMachine;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.CounterStateMachineProvider;
 import de.umr.raft.raftlogreplicationdemo.services.ICounterService;
+import de.umr.raft.raftlogreplicationdemo.services.ReplicatedService;
 import de.umr.raft.raftlogreplicationdemo.services.sysinfo.SystemInfoService;
 import lombok.val;
 import org.apache.ratis.protocol.Message;
 import org.apache.ratis.protocol.RaftClientReply;
+import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,16 +24,15 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-public class ReplicatedCounterService implements ICounterService {
-
-    @Autowired
-    RaftConfig raftConfig;
+public class ReplicatedCounterService extends ReplicatedService implements ICounterService {
 
     @Autowired
     ClusterManagementMultiRaftServer clusterManagementMultiRaftServer;
@@ -36,65 +40,40 @@ public class ReplicatedCounterService implements ICounterService {
     @Autowired
     SystemInfoService systemInfoService;
 
-    private final Message INCREMENT_MESSAGE = Message.valueOf("INCREMENT");
-    private final Message GET_MESSAGE = Message.valueOf("GET");
-
     private CounterReplicationClient createClientForCounterId(String counterId) {
         return new CounterReplicationClient(raftConfig, counterId);
     }
 
+    private CompletableFuture<Integer> sendAndExecuteOperationMessage(String counterId, CounterOperationMessage operationMessage) {
+        return wrapInCompletableFuture(() -> {
+            val result = createClientForCounterId(counterId).sendAndExecuteOperationMessage(
+                    operationMessage,
+                    CounterOperationResultProto.parser());
+
+            if (!result.getStatus().equals(OperationResultStatus.OK)) {
+                // TODO better, custom expection; like StateMachineMessageExecutionException
+                throw new UnsupportedOperationException();
+            }
+
+            return result.getCounterValue();
+        });
+    }
+
     @Override
     public CompletableFuture<List<String>> getCounters() throws IOException, ExecutionException, InterruptedException {
-        CompletableFuture<List<String>> completableFuture = new CompletableFuture<>();
-
-        Executors.newCachedThreadPool().submit(() -> {
-            try {
-
-                val raftGroups = systemInfoService.getRaftGroups();
-                val counterRaftGroups = raftGroups.stream().filter(raftGroupInfo -> {
-                    val stateMachineClass = raftGroupInfo.getStateMachineClass();
-                    val counterStateMachineClassName = CounterStateMachine.class.getCanonicalName();
-                    return stateMachineClass.equals(counterStateMachineClassName);
-                }).collect(Collectors.toList());
-                val counterIds = counterRaftGroups.stream().map(raftGroupInfo ->
+        // TODO this is something that must be done by clusterManagementStateMachine via client
+        return wrapInCompletableFuture(() -> {
+            val raftGroups = systemInfoService.getRaftGroups();
+            val counterRaftGroups = raftGroups.stream().filter(raftGroupInfo -> {
+                val stateMachineClass = raftGroupInfo.getStateMachineClass();
+                val counterStateMachineClassName = CounterStateMachine.class.getCanonicalName();
+                return stateMachineClass.equals(counterStateMachineClassName);
+            }).collect(Collectors.toList());
+            val counterIds = counterRaftGroups.stream().map(raftGroupInfo ->
                     raftGroupInfo.getName().replace(String.format("%s:", raftGroupInfo.getServerName()), "")
-                ).collect(Collectors.toList());
-
-                completableFuture.complete(counterIds);
-            } catch (Exception e) {
-                completableFuture.completeExceptionally(e);
-            }
-            return null;
+            ).collect(Collectors.toList());
+            return counterIds;
         });
-
-        return completableFuture;
-    }
-
-    @Override
-    public CompletableFuture increment(String counterId) {
-        return createClientForCounterId(counterId).send(INCREMENT_MESSAGE);
-    }
-
-    @Override
-    public CompletableFuture<Integer> getCounter(String counterId) {
-        CompletableFuture<Integer> completableFuture = new CompletableFuture<>();
-
-        Executors.newCachedThreadPool().submit(() -> {
-            try {
-
-                RaftClientReply countReply = createClientForCounterId(counterId).sendReadOnly(GET_MESSAGE).get();
-                // TODO catch exceptions or raft errors
-                Message countReplyMessage = countReply.getMessage();
-                String countMessageContent = countReplyMessage.getContent().toString(Charset.defaultCharset());
-                Integer count = countMessageContent.isEmpty() ? 0 : Integer.parseInt(countMessageContent);
-                completableFuture.complete(count);
-            } catch (Exception e) {
-                completableFuture.completeExceptionally(e);
-            }
-            return null;
-        });
-
-        return completableFuture;
     }
 
     /**
@@ -104,20 +83,23 @@ public class ReplicatedCounterService implements ICounterService {
      */
     @Override
     public CompletableFuture<RaftGroupInfo> createNewCounter(CreateCounterRequest createCounterRequest) throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, ExecutionException, InterruptedException {
-        CompletableFuture<RaftGroupInfo> completableFuture = new CompletableFuture<>();
-
-        Executors.newCachedThreadPool().submit(() -> {
-            try {
-                val peers = raftConfig.getManagementPeersList();
-                val raftGroupInfo = clusterManagementMultiRaftServer.registerNewRaftGroup(
-                        CounterStateMachineProvider.of(createCounterRequest.getId(), peers));
-                completableFuture.complete(raftGroupInfo);
-            } catch (Exception e) {
-                completableFuture.completeExceptionally(e);
-            }
-            return null;
+        return wrapInCompletableFuture(() -> {
+            // TODO should allow passing list of peers for this counter partition
+            val peers = raftConfig.getManagementPeersList();
+            // TODO this is something that must be done by clusterManagementStateMachine via client, not directly by server
+            val raftGroupInfo = clusterManagementMultiRaftServer.registerNewRaftGroup(
+                    CounterStateMachineProvider.of(createCounterRequest.getId(), peers));
+            return raftGroupInfo;
         });
+    }
 
-        return completableFuture;
+    @Override
+    public CompletableFuture increment(String counterId) throws InvalidProtocolBufferException, ExecutionException, InterruptedException {
+        return sendAndExecuteOperationMessage(counterId, CounterReplicationClient.createIncrementOperationMessage());
+    }
+
+    @Override
+    public CompletableFuture<Integer> getCounter(String counterId) {
+        return sendAndExecuteOperationMessage(counterId, CounterReplicationClient.createGetOperationMessage());
     }
 }

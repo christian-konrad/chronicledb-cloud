@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import {Typography} from "@material-ui/core";
 
 class ErrorBoundary extends Component {
     constructor(props) {
@@ -19,7 +20,7 @@ class ErrorBoundary extends Component {
     render() {
         if (this.state.hasError) {
             // You can render any custom fallback UI
-            return <h1>Something went wrong.</h1>;
+            return <Typography>Something went wrong.</Typography>;
         }
 
         return this.props.children;

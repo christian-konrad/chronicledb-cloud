@@ -1,6 +1,7 @@
 package de.umr.raft.raftlogreplicationdemo.replication.impl;
 
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.ClusterManagementStateMachineProvider;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.ClusterMetaDataStateMachineProvider;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.CounterStateMachineProvider;

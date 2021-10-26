@@ -3,20 +3,14 @@ package de.umr.raft.raftlogreplicationdemo.replication.impl.facades;
 
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperationResultProto;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.OperationResultStatus;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.metadata.MetadataQueryOperationExecutor;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterMetadataReplicationClient;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.metadata.MetadataOperationMessage;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.metadata.MetadataSetOperation;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
-import org.apache.ratis.protocol.Message;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
-import org.springframework.util.SerializationUtils;
 
 import java.util.*;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -50,14 +44,10 @@ public class ReplicatedMetadataMap {
     }
 
     private void fetchCurrentData() throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
-        // Message response = client.sendReadOnly(ClusterMetadataReplicationClient.GET_MESSAGE).get().getMessage();
+        val responseProto = client.sendAndExecuteOperationMessage(
+                ClusterMetadataReplicationClient.createGetAllForScopeOperationMessage(scope),
+                MetadataOperationResultProto.parser());
 
-        // TODO this never returns, but debugger also does not stop in the state machine
-
-        // TODO simplify in client; have client.getAllForScope(scope).get() which returns responseProto
-        Message response = client.sendReadOnly(ClusterMetadataReplicationClient.createGetAllForScopeOperationMessage(scope)).get().getMessage();
-
-        val responseProto = MetadataOperationResultProto.parseFrom(response.getContent());
         if (!responseProto.getStatus().equals(OperationResultStatus.OK)) {
             // TODO throw exception
             currentData = null;
@@ -87,24 +77,32 @@ public class ReplicatedMetadataMap {
 
     public boolean isEmpty() throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
         fetchCurrentData();
+        // TODO dedicated message operation
         return currentData.isEmpty();
     }
 
     public boolean containsKey(String key) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
         fetchCurrentData();
+        // TODO dedicated message operation
         return currentData.containsKey(key);
     }
 
     public String get(String key) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
-        fetchCurrentData(); // TODO use dedicates message; fetchCurrentData not be needed anymore
+        val responseProto = client.sendAndExecuteOperationMessage(
+                ClusterMetadataReplicationClient.createGetOperationMessage(scope, key),
+                MetadataOperationResultProto.parser());
 
-//        try {
-//            client.send(ClusterMetadataReplicationClient.createGetOperationMessage(scope, key)).get();
-//        } catch (CompletionException e) {
-//            // throw (RaftException) e.getCause();
-//        }
-//
-        return currentData.get(key);
+        if (!responseProto.getStatus().equals(OperationResultStatus.OK)) {
+            throw new NoSuchElementException();
+        }
+
+        val result = responseProto.getResult();
+
+        val resultVal = result.getIsNull() ? null : result.getLeafValue();
+
+        return resultVal;
+
+        //return currentData.get(key);
     }
 
     public String put(String key, String value) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
@@ -140,7 +138,7 @@ public class ReplicatedMetadataMap {
     }
 
     public void clear() throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
-        // TODO use dedicated messafe
+        // TODO use dedicated message
         fetchCurrentData();
         for (val key : currentData.keySet()) {
             remove(key);

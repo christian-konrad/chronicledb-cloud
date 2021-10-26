@@ -32,6 +32,8 @@ public class ClusterManagementStateMachine extends BaseStateMachine {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClusterManagementStateMachine.class);
 
+    // TODO private final ClusterState <-- all that is to be known about the cluster
+
     // TODO may be unused
     private final SimpleStateMachineStorage storage =
             new SimpleStateMachineStorage();

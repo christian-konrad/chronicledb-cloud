@@ -2,7 +2,7 @@ package de.umr.raft.raftlogreplicationdemo.replication.runners;
 
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterManagementMultiRaftServer;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterMetadataReplicationClient;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

@@ -45,7 +45,7 @@ public class ReplicatedCounterController {
     // TODO pass ID
     @PostMapping("/api/counter/replicated/{id}/increment")
     @ResponseStatus(value = HttpStatus.OK)
-    public void increment(@PathVariable String id) throws IOException {
+    public void increment(@PathVariable String id) throws IOException, ExecutionException, InterruptedException {
         counterService.increment(id).join();
     }
 }

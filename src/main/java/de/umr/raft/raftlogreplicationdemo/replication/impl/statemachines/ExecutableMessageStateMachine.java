@@ -1,6 +1,7 @@
 package de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines;
 
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.ExecutableMessage;
+import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.counter.CounterOperationMessage;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.apache.ratis.proto.RaftProtos;
@@ -19,6 +20,7 @@ import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferExce
 import org.apache.ratis.util.AutoCloseableLock;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -49,7 +51,12 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
 
     abstract protected void restoreState(ObjectInputStream in) throws IOException, ClassNotFoundException;
 
-    protected abstract ExecutableMessageImpl createExecutableMessageOf(ByteString byteString) throws InvalidProtocolBufferException;
+    abstract protected ExecutableMessageImpl createExecutableMessageOf(ByteString byteString) throws InvalidProtocolBufferException;
+
+    @SuppressWarnings("unchecked")
+    protected ExecutableMessageImpl createExecutableMessageOf(ByteString byteString, Class<ExecutableMessageImpl> clazz) throws InvalidProtocolBufferException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        return (ExecutableMessageImpl) clazz.getMethod("of", ByteString.class).invoke(byteString);
+    }
 
     private CompletableFuture<Message> ERROR_MESSAGE = CompletableFuture.completedFuture(ExecutableMessage.ERROR_MESSAGE);
 

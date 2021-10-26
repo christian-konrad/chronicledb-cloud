@@ -1,15 +1,9 @@
 package de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages;
 
-import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperationProto;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.OperationExecutionResult;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.metadata.MetadataOperationMessage;
 import org.apache.ratis.protocol.Message;
-import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
-import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**

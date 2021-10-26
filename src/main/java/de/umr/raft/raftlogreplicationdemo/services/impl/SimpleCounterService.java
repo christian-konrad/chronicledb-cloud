@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,7 +19,7 @@ public class SimpleCounterService implements ICounterService {
     // TODO somehow respect IDs by having a map of counters
 
     @Override
-    public CompletableFuture getCounters() throws IOException {
+    public CompletableFuture<List<String>> getCounters() throws IOException {
         return null;
     }
 

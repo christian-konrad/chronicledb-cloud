@@ -4,7 +4,6 @@ import de.umr.raft.raftlogreplicationdemo.replication.api.proto.CounterOperation
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.CounterOperationResultProto;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.CounterOperationType;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.OperationResultStatus;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.OperationExecutionResult;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.counter.CounterQueryOperationExecutor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CounterGetOperationExecutor implements CounterQueryOperationExecutor {
     @Getter private final CounterOperationProto counterOperation;
 
+    @Override
     public CompletableFuture<CounterOperationResultProto> apply(AtomicInteger counter) {
         val result = counter.get();
         return CompletableFuture.completedFuture(createCounterOperationResult(result));

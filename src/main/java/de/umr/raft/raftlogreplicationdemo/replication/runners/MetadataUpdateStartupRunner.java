@@ -1,7 +1,7 @@
 package de.umr.raft.raftlogreplicationdemo.replication.runners;
 
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterMetadataReplicationClient;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.ReplicatedMetadataMap;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -53,7 +53,6 @@ public class MetadataUpdateStartupRunner implements ApplicationRunner {
         replicatedMetaDataMap.put("replicationPort", String.valueOf(raftConfig.getReplicationPort()));
 
         replicatedMetaDataMap.put("httpPort", raftConfig.getHttpPort());
-        // TODO what else can we tell about us? URL? OS? JVM version?
         replicatedMetaDataMap.put("localHostAddress", InetAddress.getLocalHost().getHostAddress());
         replicatedMetaDataMap.put("localHostName", InetAddress.getLocalHost().getHostName());
 

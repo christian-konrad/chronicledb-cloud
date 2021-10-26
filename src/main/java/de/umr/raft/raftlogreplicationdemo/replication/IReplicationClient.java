@@ -1,5 +1,7 @@
 package de.umr.raft.raftlogreplicationdemo.replication;
 
+import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.CounterReplicationClient;
 import org.apache.ratis.client.RaftClient;
 import org.apache.ratis.protocol.Message;
 import org.apache.ratis.protocol.RaftClientReply;

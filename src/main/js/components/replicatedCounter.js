@@ -5,6 +5,7 @@ import {Button, Card, CardContent, List, ListItem, ListItemText, Typography} fro
 import {withStyles} from '@material-ui/core/styles';
 import NodeList from "./nodeList";
 import ErrorBoundary from "./error/errorBoundary";
+import ReplicatedCounters from "./replicatedCounters";
 
 const useStyles = theme => ({
     cardContent: {
@@ -42,7 +43,8 @@ class ReplicatedCounter extends Component {
 
     updateCounter() {
         ApiClient.fetchReplicatedCounter(this.counterId)
-            .then(replicatedCounter => this.setState({ replicatedCounter }));
+            .then(replicatedCounter => this.setState({ replicatedCounter }))
+            .catch(error => this.setState({ replicatedCounter: null }));
     }
 
     componentDidMount() {
@@ -53,7 +55,6 @@ class ReplicatedCounter extends Component {
     }
 
     increment() {
-        // TODO list counters; allow specific counter to increment
         ApiClient.incrementReplicatedCounter(this.counterId)
             .then(() => this.updateCounter());
     }
@@ -67,11 +68,13 @@ class ReplicatedCounter extends Component {
         return (
             <Card variant="outlined">
                 <CardContent className={classes.cardContent}>
-                    <div className={classes.incrementBox}>
-                        <Typography className={classes.counterId}>{this.counterId}</Typography>
-                        <Typography className={classes.counterDisplay}>{replicatedCounter}</Typography>
-                        <Button variant="outlined" onClick={this.increment} className={classes.incrementButton}>Increment</Button>
-                    </div>
+                    <ErrorBoundary>
+                        <div className={classes.incrementBox}>
+                            <Typography className={classes.counterId}>{this.counterId}</Typography>
+                            <Typography className={classes.counterDisplay}>{replicatedCounter}</Typography>
+                            <Button variant="outlined" onClick={this.increment} className={classes.incrementButton}>Increment</Button>
+                        </div>
+                    </ErrorBoundary>
                 </CardContent>
             </Card>
         )

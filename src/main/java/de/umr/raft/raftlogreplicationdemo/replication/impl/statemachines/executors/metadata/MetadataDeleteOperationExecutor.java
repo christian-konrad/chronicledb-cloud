@@ -4,7 +4,6 @@ import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperatio
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperationResultProto;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperationType;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.OperationResultStatus;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.OperationExecutionResult;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.metadata.MetadataQueryOperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.metadata.MetadataTransactionOperationExecutor;
 import lombok.Getter;

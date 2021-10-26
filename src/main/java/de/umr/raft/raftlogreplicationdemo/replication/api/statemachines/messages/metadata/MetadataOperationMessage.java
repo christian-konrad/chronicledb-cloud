@@ -2,14 +2,10 @@ package de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.message
 
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperationResultProto;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperationType;
-import de.umr.raft.raftlogreplicationdemo.replication.api.proto.OperationResultStatus;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.OperationExecutionResult;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.metadata.MetadataOperationExecutor;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.metadata.MetadataQueryOperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.ExecutableMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.apache.ratis.protocol.Message;
 import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperationProto;

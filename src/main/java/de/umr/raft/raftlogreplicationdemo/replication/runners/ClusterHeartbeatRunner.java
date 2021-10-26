@@ -1,7 +1,7 @@
 package de.umr.raft.raftlogreplicationdemo.replication.runners;
 
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterMetadataReplicationClient;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.ReplicatedMetadataMap;
 import lombok.RequiredArgsConstructor;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutionException;
 
 import static java.lang.System.currentTimeMillis;
 
-@Component
+//@Component
 @RequiredArgsConstructor(staticName = "of")
 public class ClusterHeartbeatRunner implements ApplicationRunner {
 
