@@ -37,6 +37,27 @@ class ApiClient {
         });
         return response.ok;
     }
+
+    static async fetchEventStreamNames() {
+        const response = await fetch(`/api/event-store/streams`);
+        return response.json();
+    }
+
+    static async pushEvents(streamName, events) {
+        const response = await fetch(`/api/event-store/streams/${streamName}/events`, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ events })
+        });
+        return response.json();
+    }
+
+    static async pushEvent(streamName, event) {
+        return this.pushEvents(streamName, [event]);
+    }
 }
 
 export default ApiClient;

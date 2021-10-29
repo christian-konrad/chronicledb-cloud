@@ -22,6 +22,9 @@
 		<frontend-maven-plugin.version>1.6</frontend-maven-plugin.version>
 		<node.version>v12.16.3</node.version>
 		<yarn.version>v1.22.4</yarn.version>
+		<chronicledb.version>0.2.0-prealpha</chronicledb.version>
+		<event-commons.version>0.1.0-prealpha</event-commons.version>
+		<lambda-jepc-ql.version>0.2.0-prealpha</lambda-jepc-ql.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -34,6 +37,7 @@
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -81,6 +85,29 @@
 			<version>3.0.11.RELEASE</version>
 		</dependency>
 
+		<!-- ChronicleDB -->
+		<dependency>
+			<groupId>de.umr.chronicledb</groupId>
+			<artifactId>chronicledb-event</artifactId>
+			<version>${chronicledb.version}</version>
+		</dependency>
+		<!-- Event Processing Commons -->
+		<dependency>
+			<groupId>de.umr.event</groupId>
+			<artifactId>event-data-model</artifactId>
+			<version>${event-commons.version}</version>
+		</dependency>
+		<!-- Lambda QL (of ChronicleDB/JEPC) -->
+		<dependency>
+			<groupId>de.umr.lambda</groupId>
+			<artifactId>lambda-ql</artifactId>
+			<version>${lambda-jepc-ql.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>de.umr.lambda</groupId>
+			<artifactId>lambda-jepc-ql</artifactId>
+			<version>${lambda-jepc-ql.version}</version>
+		</dependency>
 		<!-- Protocol buffers for java -->
 		<!-- no external dependency needed as it is included in ratis, -->
 		<!-- but we need to replace dependencies created by protoc on maven build -->
@@ -201,6 +228,18 @@
 					</replacements>
 				</configuration>
 			</plugin>
+<!--			<plugin>-->
+<!--				<groupId>org.apache.maven.plugins</groupId>-->
+<!--				<artifactId>maven-compiler-plugin</artifactId>-->
+<!--				<version>3.8.1</version>-->
+<!--				<configuration>-->
+<!--					<forceJavacCompilerUse>true</forceJavacCompilerUse>-->
+<!--					<compilerArgs>-->
+<!--						<arg>-Werror</arg>-->
+<!--						<arg>-verbose</arg>-->
+<!--					</compilerArgs>-->
+<!--				</configuration>-->
+<!--			</plugin>-->
 		</plugins>
 	</build>
 

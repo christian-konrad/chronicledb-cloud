@@ -1,4 +1,4 @@
-package de.umr.raft.raftlogreplicationdemo.replication.impl.facades;
+package de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata;
 
 
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperationResultProto;
@@ -114,7 +114,12 @@ public class ReplicatedMetadataMap {
 //        }
         // TODO handle CompletionException
 
-        String previousValue = get(key);
+        String previousValue;
+        try {
+            previousValue = get(key);
+        } catch (NoSuchElementException e) {
+            previousValue = null;
+        }
 
         try {
             client.send(ClusterMetadataReplicationClient.createSetOperationMessage(scope, key, value)).join();

@@ -9,10 +9,12 @@ import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages
 import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterManagementMultiRaftServer;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.CounterReplicationClient;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.CounterStateMachine;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.EventStoreStateMachine;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.CounterStateMachineProvider;
 import de.umr.raft.raftlogreplicationdemo.services.ICounterService;
 import de.umr.raft.raftlogreplicationdemo.services.ReplicatedService;
 import de.umr.raft.raftlogreplicationdemo.services.sysinfo.SystemInfoService;
+import de.umr.raft.raftlogreplicationdemo.util.RaftGroupUtil;
 import lombok.val;
 import org.apache.ratis.protocol.Message;
 import org.apache.ratis.protocol.RaftClientReply;
@@ -64,14 +66,8 @@ public class ReplicatedCounterService extends ReplicatedService implements ICoun
         // TODO this is something that must be done by clusterManagementStateMachine via client
         return wrapInCompletableFuture(() -> {
             val raftGroups = systemInfoService.getRaftGroups();
-            val counterRaftGroups = raftGroups.stream().filter(raftGroupInfo -> {
-                val stateMachineClass = raftGroupInfo.getStateMachineClass();
-                val counterStateMachineClassName = CounterStateMachine.class.getCanonicalName();
-                return stateMachineClass.equals(counterStateMachineClassName);
-            }).collect(Collectors.toList());
-            val counterIds = counterRaftGroups.stream().map(raftGroupInfo ->
-                    raftGroupInfo.getName().replace(String.format("%s:", raftGroupInfo.getServerName()), "")
-            ).collect(Collectors.toList());
+            val eventStoreRaftGroups = RaftGroupUtil.filterRaftGroupsByStateMachine(raftGroups, CounterStateMachine.class);
+            val counterIds = RaftGroupUtil.getPartitionNamesFromRaftGroupInfos(eventStoreRaftGroups);
             return counterIds;
         });
     }

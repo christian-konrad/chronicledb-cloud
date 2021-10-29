@@ -2,7 +2,7 @@ package de.umr.raft.raftlogreplicationdemo.replication.runners;
 
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.ReplicatedMetadataMap;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata.ReplicatedMetadataMap;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.ratis.util.NetUtils;

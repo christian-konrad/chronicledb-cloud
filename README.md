@@ -1,8 +1,14 @@
-> ⚠ TODO restructure package; have all statemachine impls in their own packages
+# Framework for Replicated Services using Apache Ratis
+
+> 🚧 TODO give it a nice, recognizable name!
+
+> 🚧 TODO Explain why, what, how
+ 
+> 🚧 TODO Rename the whole package as it is no longer a "demo"
 
 # Cluster Startup
 
-For development, 
+> 🚧 TODO Clean up, explain best practices for dev, explain using IntelliJ, explain how to build using maven (include yarn and protobuf builds), show simple examples
 
 ```shell
 PEERS=n1:localhost:6000,n2:localhost:6001,n3:localhost:6002
@@ -104,7 +110,7 @@ docker run -p {HTTP_PORT}:{HTTP_PORT} raft-log-replication-demo \
 
 ### Example Cluster
 
-TODO docker-compose!
+> 🚧 TODO clean up, explain the docker-compose, show simple example
 
 ```shell
 PEERS=n1:localhost:6000,n2:localhost:6001,n3:localhost:6002
@@ -139,3 +145,32 @@ docker run -p 8080:8080 raft-log-replication-demo \
 --storage=/tmp/raft-demo/${ID} \
 --peers=${PEERS}
 ```
+
+> 🚧 TODO Architecture Diagram
+
+## Roadmap - Pending TODOs
+
+### Package restructuring
+Have all statemachine impls / applications in their own packages
+
+The package structure may then look like
+
+- applications
+    - <APPLICATION_NAME>
+        - api
+        - impl
+            - data
+            - messages
+                - executors
+            - <APPLICATION_NAME>StateMachineProvider
+            - <APPLICATION_NAME>StateMachine
+            - <APPLICATION_NAME>Client
+
+### Make a library out of the Apache Ratis on-top abstractions
+The goal is to create a standalone, high-level abstraction of Apache Ratis to enable developers to build high available applications with strong consistent replication in record time.
+
+### Make it deployable on Kubernetes
+To make advantage of the failover and replica mechanisms of kubernetes, the management server is to be extended to automatic cluster change and balancing strategies. The goal is that once a node fails and Kubernetes spawns a new one, the Raft service automatically recognizes this and uses the new node in new partitions and those missing a required replica.
+
+### Test coverage
+There is currently little to no test coverage. We want everything to be tested.

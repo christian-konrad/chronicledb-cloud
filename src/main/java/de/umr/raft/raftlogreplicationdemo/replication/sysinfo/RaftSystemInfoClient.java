@@ -4,7 +4,7 @@ import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterManagementMultiRaftServer;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.ReplicatedMetadataMap;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata.ReplicatedMetadataMap;
 import lombok.val;
 import org.apache.ratis.client.RaftClient;
 import org.apache.ratis.client.api.GroupManagementApi;
@@ -65,7 +65,12 @@ public class RaftSystemInfoClient {
         // TODO should have list of all available peers in replicatedMetaDataMap, too
         // as it can change over time due to config changes
         val replicatedMetaDataMap = ReplicatedMetadataMap.ofRaftGroupScope(metaDataClient);
-        val raftGroupsString = replicatedMetaDataMap.get("groups");
+        String raftGroupsString;
+        try {
+            raftGroupsString = replicatedMetaDataMap.get("groups");
+        } catch (NoSuchElementException e) {
+            raftGroupsString = null;
+        }
 
         if (raftGroupsString == null) {
             val groupManagementApi = metaDataClient.getGroupManagementApi();

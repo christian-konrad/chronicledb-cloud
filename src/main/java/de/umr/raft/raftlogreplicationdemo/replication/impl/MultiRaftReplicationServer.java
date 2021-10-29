@@ -4,7 +4,7 @@ import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
 import de.umr.raft.raftlogreplicationdemo.replication.IReplicationServer;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.ReplicatedMetadataMap;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata.ReplicatedMetadataMap;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.StateMachineProvider;
 import lombok.val;
 import org.apache.ratis.client.RaftClient;
@@ -279,7 +279,14 @@ public abstract class MultiRaftReplicationServer implements IReplicationServer.R
     // TODO not only register in map of current peer, but in all peers
     private void broadcastRaftGroupInfo(String groupId, UUID groupUUID, String groupName, String stateMachineType, List<String> nodeIds) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
         val replicatedMetaDataMap = ReplicatedMetadataMap.ofRaftGroupScope(metaDataClient);
-        var raftGroupsString = replicatedMetaDataMap.get("groups");
+
+        String raftGroupsString;
+        try {
+            raftGroupsString = replicatedMetaDataMap.get("groups");
+        } catch (NoSuchElementException e) {
+            raftGroupsString = null;
+        }
+
         if (raftGroupsString == null) raftGroupsString = "";
 
         val raftGroups = raftGroupsString.split(";");

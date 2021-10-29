@@ -1,0 +1,69 @@
+syntax = "proto3";
+option java_package = "de.umr.raft.raftlogreplicationdemo.replication.api.proto";
+// option java_outer_classname = "MetadataProtos";
+option java_generate_equals_and_hash = true;
+option java_multiple_files = true;
+package raftlogreplicationdemo.replication.api.proto.operations.eventstore;
+import "operations/OperationResultStatus.proto";
+
+enum EventStoreOperationType {
+    NULL = 0; // null/noop operation that does nothing
+    PUSH_EVENT = 1;
+    QUERY = 2;
+    AGGREGATE = 3;
+    // TODO aggregate etc
+}
+
+message EventStoreOperationProto {
+    EventStoreOperationType operation_type = 1;
+    EventProto event = 2; // for push operation
+    string query = 3; // TODO may there be a binary representation of queries? Would that have any positive impact on performance?
+    AggregateRequestProto aggregate_request = 4;
+}
+
+message EventStoreOperationResultProto {
+    EventStoreOperationType operation_type = 1;
+    OperationResultStatus status = 2;
+    repeated EventProto result = 3; // the query (or aggregation?) result
+}
+
+enum EventSerializationType {
+    UNKNOWN_SERIALIZATION_TYPE = 0;
+    NATIVE = 1;
+    PROTOBUF = 2;
+}
+
+message EventProto {
+    EventSerializationType serialization_type = 1;
+    uint64 t1 = 2; // event start
+    uint64 t2 = 3; // event end
+    repeated bytes payload = 4; // binary representation, need certain serialization strategies on client side (maybe another protobufs)
+    bytes native_serialized_event = 5; // in case the event is serialized using native chronicle serializer in java
+}
+
+message RangeProto {
+    uint64 lower = 1;
+    uint64 upper = 2;
+    bool lowerInclusive = 3;
+    bool upperInclusive = 4;
+}
+
+enum AggregateTypeProto {
+    UNKNOWN_AGGREGATE = 0;
+    COUNT = 1;
+    SUM = 2;
+    MIN = 3;
+    MAX = 4;
+    BBOX = 5;
+}
+
+// TODO is this sufficient?
+message EventAggregateProto {
+    AggregateTypeProto aggregate_id = 1;
+    string attribute = 2;
+}
+
+message AggregateRequestProto {
+    RangeProto range = 1;
+    repeated EventAggregateProto event_aggregates = 2;
+}

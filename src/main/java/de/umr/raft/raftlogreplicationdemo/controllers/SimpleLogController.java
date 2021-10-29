@@ -9,18 +9,21 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+// TODO remove after testing
+
 @RestController
+@RequestMapping("/api/log")
 public class SimpleLogController {
 
     @Autowired
     SimpleLogPersistenceService logPersistenceService;
 
-    @PostMapping("/api/log/entry")
+    @PostMapping("entry")
     public SimpleLogEntry appendEntry(@RequestBody String content) throws ExecutionException, InterruptedException, IOException {
         return logPersistenceService.appendEntry(content).get();
     }
 
-    @GetMapping("/api/log")
+    @GetMapping("")
     public List<SimpleLogEntry> getLog() throws IOException, ExecutionException, InterruptedException {
         return logPersistenceService.getLog().get();
     }

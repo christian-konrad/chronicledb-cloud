@@ -24,6 +24,16 @@ public class ClusterMetadataStateMachine extends ExecutableMessageStateMachine<M
     }
 
     @Override
+    protected Object createStateSnapshot() {
+        return getStateObject();
+    }
+
+    @Override
+    protected void initState() {
+        // noop
+    }
+
+    @Override
     protected void clearState() {
         metadata.clear();
     }

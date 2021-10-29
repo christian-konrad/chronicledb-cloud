@@ -5,7 +5,7 @@ import de.umr.raft.raftlogreplicationdemo.models.sysinfo.NodeInfo;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.SystemInfo;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.ReplicatedMetadataMap;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata.ReplicatedMetadataMap;
 import de.umr.raft.raftlogreplicationdemo.replication.sysinfo.RaftSystemInfoClient;
 import lombok.val;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;

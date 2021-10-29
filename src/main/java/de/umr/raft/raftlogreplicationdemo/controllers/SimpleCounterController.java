@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
+@RequestMapping("/api/counter")
 public class SimpleCounterController {
 
     @Autowired
@@ -19,12 +20,12 @@ public class SimpleCounterController {
 
     private final AtomicInteger counter = new AtomicInteger();
 
-    @GetMapping(value = "/api/counter", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(value = "", produces = MediaType.TEXT_PLAIN_VALUE)
     public String getCounter(@PathVariable String id) throws IOException, ExecutionException, InterruptedException {
         return counterService.getCounter(id).get().toString();
     }
 
-    @PostMapping("/api/counter/increment")
+    @PostMapping("increment")
     @ResponseStatus(value = HttpStatus.OK)
     public void increment(@PathVariable String id) throws IOException {
         counterService.increment(id).join();

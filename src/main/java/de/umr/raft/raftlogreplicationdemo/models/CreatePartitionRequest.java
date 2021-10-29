@@ -1,6 +1,6 @@
 package de.umr.raft.raftlogreplicationdemo.models;
 
-public interface CreateRaftGroupRequest {
+public interface CreatePartitionRequest {
 
     abstract long getPartitionsCount();
 

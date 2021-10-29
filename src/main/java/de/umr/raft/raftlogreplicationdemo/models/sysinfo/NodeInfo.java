@@ -1,6 +1,6 @@
 package de.umr.raft.raftlogreplicationdemo.models.sysinfo;
 
-import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.ReplicatedMetadataMap;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata.ReplicatedMetadataMap;
 import lombok.*;
 import org.apache.ratis.protocol.RaftPeer;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;

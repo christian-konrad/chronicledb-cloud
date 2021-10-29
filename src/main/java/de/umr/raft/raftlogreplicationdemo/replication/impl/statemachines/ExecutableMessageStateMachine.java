@@ -11,6 +11,7 @@ import org.apache.ratis.server.RaftServer;
 import org.apache.ratis.server.protocol.TermIndex;
 import org.apache.ratis.server.raftlog.RaftLog;
 import org.apache.ratis.server.storage.RaftStorage;
+import org.apache.ratis.server.storage.RaftStorageDirectory;
 import org.apache.ratis.statemachine.TransactionContext;
 import org.apache.ratis.statemachine.impl.BaseStateMachine;
 import org.apache.ratis.statemachine.impl.SimpleStateMachineStorage;
@@ -21,6 +22,7 @@ import org.apache.ratis.util.AutoCloseableLock;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -32,6 +34,8 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
 
     // TODO have another extending abstract class with a custom, segmented state machine storage for chronicle
     protected final SimpleStateMachineStorage storage = new SimpleStateMachineStorage();
+
+    protected RaftStorageDirectory storageDir;
 
     // private final Supplier<? extends ExecutableMessageImpl> executableMessageSupplier;
 
@@ -46,6 +50,10 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
     }
 
     abstract protected StateObjectClass getStateObject();
+
+    abstract protected Object createStateSnapshot();
+
+    protected abstract void initState() throws IOException;
 
     abstract protected void clearState();
 
@@ -76,6 +84,8 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
                            RaftStorage raftStorage) throws IOException {
         super.initialize(server, groupId, raftStorage);
         this.storage.init(raftStorage);
+        this.storageDir = raftStorage.getStorageDir();
+        initState();
         loadSnapshot(storage.getLatestSnapshot());
     }
 
@@ -163,7 +173,7 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
         try(AutoCloseableLock readLock = readLock();
             ObjectOutputStream out = new ObjectOutputStream(
                     new BufferedOutputStream(new FileOutputStream(snapshotFile)))) {
-            out.writeObject(getStateObject());
+            out.writeObject(createStateSnapshot());
         } catch(IOException ioe) {
             LOG.warn("Failed to write snapshot file \"" + snapshotFile
                     + "\", last applied index=" + last);
@@ -188,7 +198,7 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
     public CompletableFuture<Message> query(Message request) {
         // TODO remove sneaky throws and add actual error handling
 
-        // LOG.info("QUERY - Before transforming message to executable message");
+         LOG.info("QUERY - Before transforming message to executable message");
 
         final ExecutableMessageImpl executableMessage;
         try {
@@ -199,15 +209,15 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
             return ERROR_MESSAGE;
         }
 
-        // LOG.info("QUERY - After transforming message to executable message");
+         LOG.info("QUERY - After transforming message to executable message");
 
         // check if is valid transaction message
         if (!executableMessage.isQueryMessage() || !executableMessage.isValid()) {
-            // LOG.info("QUERY - Message execution canceled");
+             LOG.info("QUERY - Message execution canceled");
             try {
                 return cancelMessageExecution(executableMessage);
             } catch (ExecutionException | InterruptedException e) {
-                // LOG.error("Cancelling of the executable message failed", e);
+                 LOG.error("Cancelling of the executable message failed", e);
                 return ERROR_MESSAGE;
             }
         }
@@ -222,19 +232,19 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
               .getActualTypeArguments()[0];
          */
 
-        // LOG.info("QUERY - Before executing the message");
+         LOG.info("QUERY - Before executing the message");
 
         try (AutoCloseableLock readLock = readLock()) {
             // actual execution of the command
             result = (ExecutionResultProto) executableMessage.apply(getStateObject()).get();
-            // LOG.info("QUERY - After executing the message");
+             LOG.info("QUERY - After executing the message");
             // TODO may use response.getStatus() ?
         } catch (ExecutionException | InterruptedException e) {
             // LOG.error("Execution of the executable message failed", e);
             return ERROR_MESSAGE;
         }
 
-        // LOG.info("QUERY - Before sending the message");
+         LOG.info("QUERY - Before sending the message");
 
         return CompletableFuture.completedFuture(Message.valueOf(result.toByteString()));
     }
@@ -254,16 +264,16 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
 
         // TODO println for debugging
 
-        // LOG.info("TRANSACTION - Get message from log");
+        LOG.info("TRANSACTION - Get message from log");
 
         final ExecutableMessageImpl executableMessage =
                 createExecutableMessageOf(entry.getStateMachineLogEntry().getLogData());
 
-        // LOG.info("TRANSACTION - Got message from log");
+         LOG.info("TRANSACTION - Got message from log");
 
         // check if is valid transaction message
         if (!executableMessage.isTransactionMessage() || !executableMessage.isValid()) {
-            // LOG.info("TRANSACTION - Message execution canceled");
+             LOG.info("TRANSACTION - Message execution canceled");
             // TODO also add reason?
             return cancelMessageExecution(executableMessage);
         }
@@ -273,7 +283,7 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
 
         ExecutionResultProto result;
 
-        // LOG.info("TRANSACTION - Before executing the message");
+         LOG.info("TRANSACTION - Before executing the message");
 
         try(AutoCloseableLock writeLock = writeLock()) {
             // actual execution of the command
@@ -283,13 +293,13 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
             updateLastAppliedTermIndex(entry.getTerm(), index);
         }
 
-        // LOG.info("TRANSACTION - After executing the message");
+         LOG.info("TRANSACTION - After executing the message");
 
         // confirm execution (TODO or else return error)
         final CompletableFuture<Message> response =
                 CompletableFuture.completedFuture(Message.valueOf(result.toByteString()));
 
-        // LOG.info("TRANSACTION - Before wrapping in response");
+         LOG.info("TRANSACTION - Before wrapping in response");
 
         // log what happened
         final RaftProtos.RaftPeerRole role = trx.getServerRole();

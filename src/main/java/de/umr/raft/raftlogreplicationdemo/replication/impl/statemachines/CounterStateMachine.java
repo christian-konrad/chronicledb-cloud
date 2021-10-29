@@ -49,6 +49,16 @@ public class CounterStateMachine extends ExecutableMessageStateMachine<AtomicInt
     }
 
     @Override
+    protected Object createStateSnapshot() {
+        return getStateObject();
+    }
+
+    @Override
+    protected void initState() {
+        // noop
+    }
+
+    @Override
     protected void clearState() {
         counter.set(0);
     }

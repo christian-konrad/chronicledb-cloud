@@ -2,10 +2,7 @@ package de.umr.raft.raftlogreplicationdemo.replication.impl;
 
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.ClusterManagementStateMachineProvider;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.ClusterMetaDataStateMachineProvider;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.CounterStateMachineProvider;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.StateMachineProvider;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.*;
 import lombok.val;
 import org.apache.ratis.protocol.RaftGroup;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +34,8 @@ public class ClusterManagementMultiRaftServer extends MultiRaftReplicationServer
         return List.of(
                 ClusterMetaDataStateMachineProvider.of("metadata", peers),
                 ClusterManagementStateMachineProvider.of("keeper", peers),
-                CounterStateMachineProvider.of("counter", peers));
+                CounterStateMachineProvider.of("counter", peers),
+                EventStoreStateMachineProvider.of("demo-event-store", peers));
     }
 
     @Autowired
