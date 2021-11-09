@@ -1,3 +1,5 @@
+// TODO split into clients per app logic
+
 class ApiClient {
     static async fetchSystemInfo() {
         const response = await fetch('/api/sys-info');
@@ -43,6 +45,11 @@ class ApiClient {
         return response.json();
     }
 
+    static async fetchEventStreamInfo(streamName) {
+        const response = await fetch(`/api/event-store/streams/${streamName}/info`);
+        return response.json();
+    }
+
     static async pushEvents(streamName, events) {
         const response = await fetch(`/api/event-store/streams/${streamName}/events`, {
             method: 'POST',
@@ -52,7 +59,7 @@ class ApiClient {
             },
             body: JSON.stringify({ events })
         });
-        return response.json();
+        return response;
     }
 
     static async pushEvent(streamName, event) {

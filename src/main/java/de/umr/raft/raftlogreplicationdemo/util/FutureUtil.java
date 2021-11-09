@@ -4,7 +4,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 
-public class FutureUtil {
+public final class FutureUtil {
     public static <ReturnType> CompletableFuture<ReturnType> wrapInCompletableFuture(Callable<ReturnType> callable) {
         CompletableFuture<ReturnType> completableFuture = new CompletableFuture<>();
 

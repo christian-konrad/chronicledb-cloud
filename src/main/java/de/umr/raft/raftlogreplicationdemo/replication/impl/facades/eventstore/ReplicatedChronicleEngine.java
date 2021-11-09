@@ -1,6 +1,5 @@
 package de.umr.raft.raftlogreplicationdemo.replication.impl.facades.eventstore;
 
-import de.umr.chronicledb.common.query.range.Range;
 import de.umr.event.Event;
 import de.umr.event.schema.EventSchema;
 import de.umr.event.schema.SchemaProvider;
@@ -13,10 +12,8 @@ import de.umr.raft.raftlogreplicationdemo.models.eventstore.QueryRequest;
 import de.umr.raft.raftlogreplicationdemo.models.eventstore.QueryResponse;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.EventStoreReplicationClient;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.eventstore.util.OutputSchemaComputer;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.EventStoreStateMachine;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.StreamInfo;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.query.QueryDescription;
 import de.umr.raft.raftlogreplicationdemo.services.sysinfo.SystemInfoService;
 import de.umr.raft.raftlogreplicationdemo.util.RaftGroupUtil;
 import lombok.SneakyThrows;
@@ -45,8 +42,6 @@ public class ReplicatedChronicleEngine implements SchemaProvider, AutoCloseable 
     private final RaftConfig raftConfig;
 
     private boolean eventStoreProviderInitialized = false;
-
-    // in case if needed: FutureUtil.wrapInCompletableFuture(callable);
 
     @Autowired
     public ReplicatedChronicleEngine(ClusterMetadataReplicationClient metadataClient, SystemInfoService systemInfoService, RaftConfig raftConfig) throws IOException, ExecutionException, InterruptedException {

@@ -6,7 +6,7 @@ import lombok.val;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class RaftGroupUtil {
+public final class RaftGroupUtil {
 
     public static List<RaftGroupInfo> filterRaftGroupsByStateMachine(List<RaftGroupInfo> raftGroups, Class stateMachineClass) {
         return raftGroups.stream().filter(raftGroupInfo -> {

@@ -40,6 +40,8 @@ public class ReplicatedEventStoreController {
         return chronicleEngine.getStreamInfo(streamName);
     }
 
+    // TODO aggregate endpoint
+
     @PostMapping(value = "/streams/{streamName}/events")
     @ResponseStatus(HttpStatus.OK)
     public void insertEvents(@PathVariable String streamName, @RequestBody InsertEventRequest input) throws IOException {

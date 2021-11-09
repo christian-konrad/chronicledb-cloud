@@ -12,7 +12,7 @@ import { Link, useLocation } from "react-router-dom";
 import {ListSubheader} from "@material-ui/core";
 import ReplicatedKeyValueStorePage from "../pages/replicatedKeyValueStore";
 
-const drawerWidth = 240;
+const drawerWidth = 260;
 
 const useStyles = makeStyles((theme) => ({
     drawer: {
@@ -78,15 +78,15 @@ export default function MainDrawer() {
                         text="Counter"
                         to="/admin/replicated-counter"
                         icon={<Calculation20 />} />
+                    {/*<DrawerListItem*/}
+                    {/*    id="replicated-key-value-store"*/}
+                    {/*    text="Key-value store"*/}
+                    {/*    to="/admin/replicated-kv-store"*/}
+                    {/*    icon={<DataStructured20 />} />*/}
                     <DrawerListItem
-                        id="replicated-key-value-store"
-                        text="Key-value store"
-                        to="/admin/replicated-kv-store"
-                        icon={<DataStructured20 />} />
-                    <DrawerListItem
-                        id="replicated-log"
-                        text="Append-only log"
-                        to="/admin/replicated-log"
+                        id="replicated-event-store"
+                        text="ChronicleDB Event Store"
+                        to="/admin/replicated-event-store"
                         icon={<MessageQueue20 />} />
                 </List>
             </div>

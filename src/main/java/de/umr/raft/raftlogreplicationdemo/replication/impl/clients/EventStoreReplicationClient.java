@@ -25,6 +25,10 @@ public class EventStoreReplicationClient extends PartitionedRaftReplicationClien
         return EventStoreOperationMessage.Factory.createGetAggregatesEventOperationMessage(range, list);
     }
 
+    public static EventStoreOperationMessage createGetKeyRangeEventOperationMessage() {
+        return EventStoreOperationMessage.Factory.createGetKeyRangeEventOperationMessage();
+    }
+
     // TODO query message
 
     @Autowired

@@ -90,6 +90,14 @@ public class EventStoreOperationMessage implements ExecutableMessage<EventStoreS
             return EventStoreOperationMessage.of(eventStoreOperation);
         }
 
+        public static EventStoreOperationMessage createGetKeyRangeEventOperationMessage() {
+            val eventStoreOperation = EventStoreOperationProto.newBuilder()
+                    .setOperationType(EventStoreOperationType.GET_KEY_RANGE)
+                    .build();
+
+            return EventStoreOperationMessage.of(eventStoreOperation);
+        }
+
         // TODO query etc
 
         public static EventStoreOperationMessage createNullOperationMessage() {

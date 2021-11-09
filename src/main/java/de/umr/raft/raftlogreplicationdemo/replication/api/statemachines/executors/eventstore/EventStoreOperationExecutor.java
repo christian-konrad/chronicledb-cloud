@@ -4,11 +4,11 @@ import de.umr.raft.raftlogreplicationdemo.replication.api.proto.*;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.NullOperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.OperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.EventStoreState;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.EventStoreGetAggregatesOperationExecutor;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.EventStoreGetKeyRangeOperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.EventStorePushEventOperationExecutor;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.metadata.*;
 import org.apache.ratis.thirdparty.com.google.protobuf.Message;
 
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public interface EventStoreOperationExecutor<ResultType extends Message> extends OperationExecutor<EventStoreState, ResultType> {
@@ -18,6 +18,10 @@ public interface EventStoreOperationExecutor<ResultType extends Message> extends
                 return EventStorePushEventOperationExecutor.of(eventStoreOperation);
             // case QUERY:
             //     return MetadataDeleteOperationExecutor.of(eventStoreOperation);
+            case AGGREGATE:
+                return EventStoreGetAggregatesOperationExecutor.of(eventStoreOperation);
+            case GET_KEY_RANGE:
+                return EventStoreGetKeyRangeOperationExecutor.of(eventStoreOperation);
             case NULL:
             case UNRECOGNIZED:
             default:

@@ -1,11 +1,13 @@
 package de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event;
 
 import de.umr.chronicledb.event.store.EventStore;
+import de.umr.chronicledb.event.store.tabPlus.TABPlusEventStore;
 import de.umr.event.schema.Attribute;
 import de.umr.event.schema.EventSchema;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.data.StateMachineState;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.MultiRaftReplicationServer;
 import lombok.Getter;
+import org.apache.ratis.util.FileUtils;
 import org.apache.ratis.util.JavaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 // TODO some interface?
@@ -70,7 +73,16 @@ public class EventStoreState implements StateMachineState {
         // this will ensure stream dirs and files follow the same pattern in every group dir
         final Path path = streamIdentifier.getBasePath().resolve(EVENT_STORE_DIR_NAME);
         // final Path path = streamIdentifier.getBasePath().resolve(normalizedName);
+
+        // TODO implement custom event store with direct access to right flank (in memory stuff, not snapshotted) and persisted stuff
         return StreamIndex.createStreamIndex(path, normalizedName, schema);
+    }
+
+    // TODO remove this method after proper snapshotting is implemented
+    private StreamIndex forceCreateStreamIndex(EventSchema schema) throws IOException {
+        final Path path = streamIdentifier.getBasePath().resolve(EVENT_STORE_DIR_NAME);
+        FileUtils.deleteFully(path);
+        return createStreamIndex(schema);
     }
 
     private EventStoreState() {
@@ -87,17 +99,23 @@ public class EventStoreState implements StateMachineState {
         // TODO Must be somehow been passed on group creation or must be the first command to the state machine
         // TODO if not initialized with schema, do not accept any read or write operations
         EventSchema schema = createSimpleSchema();
+
+        // TODO until snapshotting is implemented the right way, we always rebuild the store on startup
+        this.eventStore = forceCreateStreamIndex(schema);
+
+        /*
         try {
             this.eventStore = createStreamIndex(schema);
         } catch (IOException e) {
             if (e instanceof FileAlreadyExistsException) {
-                // store already exists, everything ok
+                // store (=snapshot) already exists, everything ok
                 LOG.info("Event store found");
             } else {
                 throw e;
             }
         }
         this.phase = Phase.INITIALIZED;
+        */
     }
 
     public void initState(Path basePath, String streamName) throws IOException {

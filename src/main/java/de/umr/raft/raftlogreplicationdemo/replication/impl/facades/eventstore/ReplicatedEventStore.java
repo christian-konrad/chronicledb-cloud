@@ -10,23 +10,34 @@ import de.umr.chronicledb.event.store.tabPlus.aggregation.impl.global.EventCount
 import de.umr.event.Event;
 import de.umr.event.schema.EventSchema;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.EventStoreOperationResultProto;
+import de.umr.raft.raftlogreplicationdemo.replication.api.proto.EventStoreOperationType;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.OperationResultStatus;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.EventStoreReplicationClient;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.DemoEventSchemaProvider;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.FinalizedEventAggregationValues;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.serialization.AggregateRequestSerializer;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
+import org.apache.ratis.statemachine.StateMachine;
+import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class ReplicatedEventStore implements AggregatedEventStore {
 
     private final EventStoreReplicationClient client;
     @Getter private final String streamName;
+
+    Logger LOG = LoggerFactory.getLogger(ReplicatedEventStore.class);
 
     @Override
     public EventSchema getSchema() {
@@ -36,8 +47,27 @@ public class ReplicatedEventStore implements AggregatedEventStore {
 
     @Override
     public Optional<Range<Long>> getKeyRange() {
-        // TODO implement via GetKeyRangeOperationMessage
-        return Optional.empty();
+        EventStoreOperationResultProto responseProto = null;
+        try {
+            responseProto = client.sendAndExecuteOperationMessage(
+                    EventStoreReplicationClient.createGetKeyRangeEventOperationMessage(),
+                    EventStoreOperationResultProto.parser());
+        } catch (Exception e) { // catch everything here to prevent sneaky throws from eating runtime errors
+            LOG.error("Could not get key range", e);
+            throw new UnsupportedOperationException("Could not get key range");
+        }
+
+        if (!responseProto.getStatus().equals(OperationResultStatus.OK)) {
+            throw new UnsupportedOperationException();
+        }
+
+        if (responseProto.getIsNullResult()) {
+            return Optional.empty();
+        }
+
+        val keyRangeResultProto = responseProto.getKeyRangeResult();
+        val keyRange = AggregateRequestSerializer.fromProto(keyRangeResultProto);
+        return Optional.of(keyRange);
     }
 
     @Override
@@ -58,29 +88,38 @@ public class ReplicatedEventStore implements AggregatedEventStore {
 
     @Override
     public EventAggregationValues getAggregates(Range<Long> range, List<? extends EventAggregate> list) throws IllegalStateException, IOException {
-        // TODO implement via AggregateEventsOperationMessage
+        EventStoreOperationResultProto responseProto = null;
+        try {
+        responseProto = client.sendAndExecuteOperationMessage(
+                EventStoreReplicationClient.createGetAggregatesEventOperationMessage(range, list),
+                EventStoreOperationResultProto.parser());
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            throw new UnsupportedOperationException("Could not get aggregate");
+        }
 
-//        EventStoreOperationResultProto responseProto = client.sendAndExecuteOperationMessage(
-//                EventStoreReplicationClient.createGetAggregatesEventOperationMessage(range, list),
-//                EventStoreOperationResultProto.parser());
-//
-//        if (!responseProto.getStatus().equals(OperationResultStatus.OK)) {
-//            // TODO throw more meaningful exception
-//            throw new UnsupportedOperationException();
-//        }
+        if (!responseProto.getStatus().equals(OperationResultStatus.OK)
+                || responseProto.getIsNullResult()
+                || !responseProto.getOperationType().equals(EventStoreOperationType.AGGREGATE)) {
+            // TODO throw more meaningful exception
+            throw new UnsupportedOperationException();
+        }
 
-        // TODO Range + List<? extends EventAggregate> -> Proto
-        // TODO EventStoreOperationResultProto -> EventAggregationValues
+        // EventStoreOperationResultProto -> EventAggregationValues
 
-        throw new UnsupportedOperationException("Currently not implemented");
+        val resultProto = responseProto.getAggregationResultMap();
 
-        // return null;
+        Map<String, Optional<?>> resultMap = resultProto.entrySet().stream().collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> AggregateRequestSerializer.fromProto(entry.getValue()))
+        );
+
+        return new FinalizedEventAggregationValues(resultMap);
     }
 
     public long eventCount() throws IOException {
         return getAggregate(new EventCount(), Long.class).orElse(0L);
     }
-
 
     @Override
     public void insert(Event event) throws IllegalStateException, IOException {

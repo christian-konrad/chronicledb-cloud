@@ -11,8 +11,10 @@ import de.umr.chronicledb.event.store.tabPlus.aggregation.impl.EventAggregate;
 import de.umr.chronicledb.event.store.tabPlus.aggregation.impl.global.EventCount;
 import de.umr.chronicledb.event.store.tabPlus.config.*;
 import de.umr.event.Event;
+import de.umr.event.ex.EPRuntimeException;
 import de.umr.event.schema.Attribute;
 import de.umr.event.schema.EventSchema;
+import de.umr.event.schema.SchemaException;
 import de.umr.jepc.v2.api.epa.EPA;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -173,7 +175,8 @@ public class StreamIndex implements EventStore {
         return eventStore.getAggregates(aggregates);
     }
 
-    public EventAggregationValues getAggregates(Range<Long> range, List<? extends EventAggregate> list) throws IllegalStateException, IOException {
+    public EventAggregationValues getAggregates(Range<Long> range, List<? extends EventAggregate> list) throws IllegalStateException, IOException, EPRuntimeException {
+        log.info("Before getting aggregates from StreamIndex");
         return eventStore.getAggregates(range, list);
     }
 

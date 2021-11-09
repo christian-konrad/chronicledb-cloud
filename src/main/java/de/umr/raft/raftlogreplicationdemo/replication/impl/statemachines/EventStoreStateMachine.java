@@ -46,6 +46,20 @@ public class EventStoreStateMachine extends ExecutableMessageStateMachine<EventS
     @Override
     protected void initState() throws IOException {
         eventStoreState.initState(getBasePath(), getStreamName());
+        // TODO currently we never take snapshots
+        // TODO can not simply re-open the event store from file as it would reappend all entries again on startup
+        // TODO how to differentiate between snapshotted and unsnapshotted state (= event store)?
+        // TODO must untie outer in-memory flank (= replayable by raft) and persisted stuff (= snapshot)
+        // TODO log replay will then only build up the right flank again but NEVER the persisted store
+        // TODO we can also implement custom StateMachineStorage that will always refer to the event store index
+        // TODO then we still need to trigger snapshotting after each insert after something is persisted in event store
+        // to have reference on last applied term and index
+        // ask how to know when something is persisted so we know when to store last applied term and index;
+        // how to control the write-ahead buffer (as it is replaced by raft log)
+        // TODO snapshot must contain last term and index (so we can ignore previous raft log entries) -> everything after it is the flank
+        // and snapshot must contain the event store (or reference on it)
+        // TODO check if OOO makes problems
+        // TODO committing (Applying) an entry should not mean writing it to disc!
     }
 
     @Override

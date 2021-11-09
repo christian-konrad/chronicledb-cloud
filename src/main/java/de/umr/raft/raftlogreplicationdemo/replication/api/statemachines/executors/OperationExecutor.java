@@ -3,6 +3,8 @@ package de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executo
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperationType;
 import org.apache.ratis.thirdparty.com.google.protobuf.Message;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.concurrent.CompletableFuture;
 
 // TODO or name StateMachineOperationExecutor?

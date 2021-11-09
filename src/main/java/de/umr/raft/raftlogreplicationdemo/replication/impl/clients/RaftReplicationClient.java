@@ -3,6 +3,7 @@ package de.umr.raft.raftlogreplicationdemo.replication.impl.clients;
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.replication.IReplicationClient;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.ExecutableMessage;
+import lombok.val;
 import org.apache.ratis.client.RaftClient;
 import org.apache.ratis.client.api.GroupManagementApi;
 import org.apache.ratis.conf.Parameters;

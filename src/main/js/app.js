@@ -12,8 +12,9 @@ import { ThemeProvider } from '@material-ui/core/styles';
 import RaftGroupsPage from "./pages/raftGroups";
 import NodeInfoPage from "./pages/nodeInfo";
 import ReplicatedCounterPage from "./pages/replicatedCounter";
-import ReplicatedKeyValueStorePage from "./pages/replicatedKeyValueStore";
-import ReplicatedAppendOnlyLogPage from "./pages/replicatedAppendOnlyLog";
+import ReplicatedEventStorePage from "./pages/replicatedEventStore";
+// import ReplicatedKeyValueStorePage from "./pages/replicatedKeyValueStore";
+// import ReplicatedAppendOnlyLogPage from "./pages/replicatedAppendOnlyLog";
 
 const theme = createTheme({
     props: {
@@ -84,8 +85,8 @@ class App extends React.Component {
                         <Route path='/admin/sys-info/nodes/:nodeId' component={NodeInfoPage}/>
                         {/* TODO not admin paths, is actual app */}
                         <Route path='/admin/replicated-counter' exact={true} component={ReplicatedCounterPage}/>
-                        <Route path='/admin/replicated-kv-store' exact={true} component={ReplicatedKeyValueStorePage}/>
-                        <Route path='/admin/replicated-log' exact={true} component={ReplicatedAppendOnlyLogPage}/>
+                        {/*<Route path='/admin/replicated-kv-store' exact={true} component={ReplicatedKeyValueStorePage}/>*/}
+                        <Route path='/admin/replicated-event-store' exact={true} component={ReplicatedEventStorePage}/>
                     </Switch>
                 </Router>
             </ThemeProvider>

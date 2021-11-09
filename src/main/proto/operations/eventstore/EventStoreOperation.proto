@@ -11,7 +11,7 @@ enum EventStoreOperationType {
     PUSH_EVENT = 1;
     QUERY = 2;
     AGGREGATE = 3;
-    // TODO aggregate etc
+    GET_KEY_RANGE = 4;
 }
 
 message EventStoreOperationProto {
@@ -21,10 +21,29 @@ message EventStoreOperationProto {
     AggregateRequestProto aggregate_request = 4;
 }
 
+enum AggregationValueType {
+    UNKNOWN_VALUE_TYPE = 0;
+    LONG = 1;
+    FLOAT = 2;
+    // BBOX = 3; // currently ignored
+    // there may be more value types, but currently there are only numerical ones
+}
+
+message AggregationValueProto {
+    bool is_null = 1;
+    AggregationValueType value_type = 2;
+    float float_value = 3;
+    int64 long_value = 4;
+    // TODO bounding_box_value
+}
+
 message EventStoreOperationResultProto {
     EventStoreOperationType operation_type = 1;
     OperationResultStatus status = 2;
-    repeated EventProto result = 3; // the query (or aggregation?) result
+    bool is_null_result = 3;
+    repeated EventProto query_result = 4;
+    RangeProto key_range_result = 5;
+    map<string, AggregationValueProto> aggregation_result = 6;
 }
 
 enum EventSerializationType {
@@ -44,8 +63,14 @@ message EventProto {
 message RangeProto {
     uint64 lower = 1;
     uint64 upper = 2;
-    bool lowerInclusive = 3;
-    bool upperInclusive = 4;
+    bool is_lower_inclusive = 3;
+    bool is_upper_inclusive = 4;
+}
+
+enum AggregateScopeProto {
+    UNKNOWN_SCOPE = 0;
+    ATTRIBUTE = 1;
+    GLOBAL = 2;
 }
 
 enum AggregateTypeProto {
@@ -59,8 +84,9 @@ enum AggregateTypeProto {
 
 // TODO is this sufficient?
 message EventAggregateProto {
-    AggregateTypeProto aggregate_id = 1;
-    string attribute = 2;
+    AggregateScopeProto aggregate_scope = 1;
+    AggregateTypeProto aggregate_id = 2;
+    string attribute = 3;
 }
 
 message AggregateRequestProto {

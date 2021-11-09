@@ -1,6 +1,5 @@
 package de.umr.raft.raftlogreplicationdemo.services.impl;
 
-import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.models.counter.CreateCounterRequest;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.CounterOperationResultProto;
@@ -9,29 +8,21 @@ import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages
 import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterManagementMultiRaftServer;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.CounterReplicationClient;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.CounterStateMachine;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.EventStoreStateMachine;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.CounterStateMachineProvider;
 import de.umr.raft.raftlogreplicationdemo.services.ICounterService;
 import de.umr.raft.raftlogreplicationdemo.services.ReplicatedService;
 import de.umr.raft.raftlogreplicationdemo.services.sysinfo.SystemInfoService;
 import de.umr.raft.raftlogreplicationdemo.util.RaftGroupUtil;
 import lombok.val;
-import org.apache.ratis.protocol.Message;
-import org.apache.ratis.protocol.RaftClientReply;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.Charset;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class ReplicatedCounterService extends ReplicatedService implements ICounterService {
