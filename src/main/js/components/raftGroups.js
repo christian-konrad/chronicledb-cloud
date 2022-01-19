@@ -1,34 +1,22 @@
 import React, { Component } from 'react';
 import ApiClient from "../api/apiClient";
 import Skeleton from '@material-ui/lab/Skeleton';
-import {List, ListItem, ListItemText, Typography} from "@material-ui/core";
+import {List, Typography} from "@material-ui/core";
 import Accordion from '@material-ui/core/Accordion';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import {withStyles} from '@material-ui/core/styles';
 import NodeList from "./nodeList";
+import InfoListItem from "./common/list/infoListItem";
+import LinkListItem from "./common/list/linkListItem";
 
 const useStyles = theme => ({
-    listItem: {
-        borderBottom: '1px solid #f1f1f1',
-    },
-    listItemText: {
-        display: 'flex',
-    },
+    // used in nodeList.js
     muiTypography: {
         subtitle2: {
             fontWeight: 600,
         }
-    },
-    itemLabel: {
-        minWidth: 240,
-        display: 'inline-block'
-    },
-    subGroupItemLabel: {
-        minWidth: 240,
-        display: 'inline-block',
-        fontSize: 18
     },
     accordionDetails: {
         display: 'block'
@@ -44,14 +32,6 @@ const useStyles = theme => ({
     }
 });
 
-const InfoListItem = ({ label, content, title, classes }) =>
-    <ListItem className={classes.listItem}>
-        <ListItemText className={classes.listItemText}
-                      primary={<span className={classes.itemLabel}>{label}</span>}
-                      secondary={content}
-                      title={title} />
-    </ListItem>;
-
 const formatStateMachineClass = stateMachineClass => {
     const stateMachineClassPackages = stateMachineClass.split('.');
     return stateMachineClassPackages[stateMachineClassPackages.length - 1];
@@ -59,7 +39,7 @@ const formatStateMachineClass = stateMachineClass => {
 
 const RaftGroupAccordion = ({ raftGroup, classes }) => {
 
-    const { name, groupId, uuid, leaderId, currentLeaderTerm, selfRole, roleSince, storageHealthy, nodes, stateMachineClass } = raftGroup;
+    const { name, groupId, uuid, leaderId, currentLeaderTerm, storageHealthy, nodes, stateMachineClass } = raftGroup;
 
     return <Accordion variant="outlined">
         <AccordionSummary
@@ -75,13 +55,12 @@ const RaftGroupAccordion = ({ raftGroup, classes }) => {
                     <InfoListItem classes={classes} label="UUID" content={uuid} />
                     <InfoListItem classes={classes} label="Group ID" content={groupId} />
                     <InfoListItem classes={classes} label="State machine class" title={stateMachineClass} content={formatStateMachineClass(stateMachineClass)} />
-                    <InfoListItem classes={classes} label="Leader ID" content={leaderId} />
-                    <InfoListItem classes={classes} label="Current leader term" content={currentLeaderTerm} />
-                    {/*<InfoListItem classes={classes} label="Current role of this node" content={selfRole} /> TODO displays wrong info*/}
-                    <InfoListItem classes={classes} label="Has role since" content={`${roleSince}ms`} />
+                    {/*<InfoListItem classes={classes} label="Leader ID" content={leaderId} />*/}
+                    {/*<InfoListItem classes={classes} label="Current leader term" content={currentLeaderTerm} />*/}
                     <InfoListItem classes={classes} label="Storage health" content={storageHealthy ? 'Healthy' : 'Problematic'} />
+                    <LinkListItem classes={classes} label="Details" content="" to={`/admin/raft-groups/${groupId}`} />
                 </List>
-                <NodeList nodeInfos={nodes} classes={classes} title="Group nodes" />
+                <NodeList nodeInfos={nodes} title="Group nodes" />
             </div>
         </AccordionDetails>
     </Accordion>

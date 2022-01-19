@@ -4,8 +4,6 @@ import Skeleton from '@material-ui/lab/Skeleton';
 import {List, ListItem, ListItemText, Typography} from "@material-ui/core";
 import {withStyles} from '@material-ui/core/styles';
 import inflection from 'inflection';
-import NodeList from "./nodeList";
-import Link from "carbon-components-react/lib/components/UIShell/Link";
 
 const useStyles = theme => ({
     listItem: {

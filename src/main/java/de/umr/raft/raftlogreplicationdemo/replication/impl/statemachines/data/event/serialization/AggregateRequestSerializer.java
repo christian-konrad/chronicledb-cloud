@@ -71,20 +71,18 @@ public class AggregateRequestSerializer {
         return new Range<>(lower, upper, isLowerInclusive, isUpperInclusive);
     }
 
-    public static AttributeAggregate attributeAggregateFromProto(EventAggregateProto aggregateProto) {
-        val attr = aggregateProto.getAttribute();
-
-        switch (aggregateProto.getAggregateId()) {
+    public static AttributeAggregate createAttributeAggregate(String attribute, AggregateTypeProto aggregateType) {
+        switch (aggregateType) {
             case COUNT:
-                return new AttributeCount(attr);
+                return new AttributeCount(attribute);
             case SUM:
-                return new AttributeSum(attr);
+                return new AttributeSum(attribute);
             case MIN:
-                return new AttributeMin(attr);
+                return new AttributeMin(attribute);
             case MAX:
-                return new AttributeMax(attr);
+                return new AttributeMax(attribute);
             case BBOX:
-                return new AttributeBoundingBox(attr);
+                return new AttributeBoundingBox(attribute);
             case UNRECOGNIZED:
             case UNKNOWN_AGGREGATE:
             default:
@@ -92,15 +90,41 @@ public class AggregateRequestSerializer {
         }
     }
 
-    public static GlobalAggregate globalAggregateFromProto(EventAggregateProto aggregateProto) {
-        switch (aggregateProto.getAggregateId()) {
+    public static AttributeAggregate createAttributeAggregate(String attribute, String aggregateType) {
+        val aggregateTypeProto = AggregateTypeProto.valueOf(aggregateType);
+        return createAttributeAggregate(attribute, aggregateTypeProto);
+    }
+
+    public static GlobalAggregate createGlobalAggregate(AggregateTypeProto aggregateType) {
+        switch (aggregateType) {
             case COUNT:
                 return new EventCount();
             case UNRECOGNIZED:
             case UNKNOWN_AGGREGATE:
             default:
-                throw new UnsupportedOperationException("Unknown attribute aggregate type");
+                throw new UnsupportedOperationException("Unknown global aggregate type");
         }
+    }
+
+    public static GlobalAggregate createGlobalAggregate(String aggregateType) {
+        val aggregateTypeProto = AggregateTypeProto.valueOf(aggregateType);
+        return createGlobalAggregate(aggregateTypeProto);
+    }
+
+    public static EventAggregate createAggregate(Optional<String> attributeName, String aggregateType) {
+        if (attributeName.isPresent() && !attributeName.get().toLowerCase().equals("all")) {
+            return createAttributeAggregate(attributeName.get(), aggregateType);
+        } else {
+            return createGlobalAggregate(aggregateType);
+        }
+    }
+
+    public static AttributeAggregate attributeAggregateFromProto(EventAggregateProto aggregateProto) {
+        return createAttributeAggregate(aggregateProto.getAttribute(), aggregateProto.getAggregateId());
+    }
+
+    public static GlobalAggregate globalAggregateFromProto(EventAggregateProto aggregateProto) {
+        return createGlobalAggregate(aggregateProto.getAggregateId());
     }
 
     public static EventAggregate fromProto(EventAggregateProto aggregateProto) {

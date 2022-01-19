@@ -8,7 +8,7 @@ import "operations/OperationResultStatus.proto";
 
 enum EventStoreOperationType {
     NULL = 0; // null/noop operation that does nothing
-    PUSH_EVENT = 1;
+    PUSH_EVENTS = 1;
     QUERY = 2;
     AGGREGATE = 3;
     GET_KEY_RANGE = 4;
@@ -16,9 +16,10 @@ enum EventStoreOperationType {
 
 message EventStoreOperationProto {
     EventStoreOperationType operation_type = 1;
-    EventProto event = 2; // for push operation
+    repeated EventProto events = 2; // for push operations
     string query = 3; // TODO may there be a binary representation of queries? Would that have any positive impact on performance?
     AggregateRequestProto aggregate_request = 4;
+    PushOptionsProto push_options = 5;
 }
 
 enum AggregationValueType {
@@ -92,4 +93,8 @@ message EventAggregateProto {
 message AggregateRequestProto {
     RangeProto range = 1;
     repeated EventAggregateProto event_aggregates = 2;
+}
+
+message PushOptionsProto {
+    bool is_ordered = 1;
 }

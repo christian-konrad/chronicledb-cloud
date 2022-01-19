@@ -1,12 +1,14 @@
 package de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata;
 
 
+import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperationResultMapProto;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperationResultProto;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.OperationResultStatus;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
+import org.apache.ratis.protocol.RaftGroupId;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 
 import java.util.*;
@@ -39,8 +41,30 @@ public class ReplicatedMetadataMap {
         return new ReplicatedMetadataMap(scope, client);
     }
 
-    public static ReplicatedMetadataMap ofRaftGroupScope(ClusterMetadataReplicationClient client) {
+    public static ReplicatedMetadataMap ofRaftGroupRegistry(ClusterMetadataReplicationClient client) {
         return ReplicatedMetadataMap.of("raft-groups", client);
+    }
+
+    /**
+     * Removes "group-" prefix of group IDs as otherwise,
+     * the key would be raft-group-group-<ID>
+     * @param raftGroupId Id of the raft group
+     * @return The id of the group without leading "group-" prefix
+     */
+    private static String prepareGroupId(String raftGroupId) {
+        return raftGroupId.replace("group-", "");
+    }
+
+    public static ReplicatedMetadataMap ofRaftGroupScope(String raftGroupId, ClusterMetadataReplicationClient client) {
+        return ReplicatedMetadataMap.of("raft-group-" + prepareGroupId(raftGroupId), client);
+    }
+
+    public static ReplicatedMetadataMap ofRaftGroupScope(RaftGroupId raftGroupId, ClusterMetadataReplicationClient client) {
+        return ReplicatedMetadataMap.ofRaftGroupScope(raftGroupId.toString(), client);
+    }
+
+    public static ReplicatedMetadataMap ofDivision(String divisionId, ClusterMetadataReplicationClient client) {
+        return ReplicatedMetadataMap.of("division-" + divisionId, client);
     }
 
     private void fetchCurrentData() throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
@@ -101,19 +125,9 @@ public class ReplicatedMetadataMap {
         val resultVal = result.getIsNull() ? null : result.getLeafValue();
 
         return resultVal;
-
-        //return currentData.get(key);
     }
 
-    public String put(String key, String value) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
-//        if (key.getBytes(MetadataOperationMessage.UTF8).length > MetadataSetOperation.KEY_LENGTH_LIMIT) {
-//            throw new IllegalArgumentException("Key too long: Only " + MetadataSetOperation.KEY_LENGTH_LIMIT + " bytes supported");
-//        }
-//        if (value.getBytes(MetadataOperationMessage.UTF8).length > MetadataSetOperation.VALUE_LENGTH_LIMIT) {
-//            throw new IllegalArgumentException("Value too long: Only " + MetadataSetOperation.VALUE_LENGTH_LIMIT + " bytes supported");
-//        }
-        // TODO handle CompletionException
-
+    private String put(String key, String value, Boolean async) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
         String previousValue;
         try {
             previousValue = get(key);
@@ -122,12 +136,22 @@ public class ReplicatedMetadataMap {
         }
 
         try {
-            client.send(ClusterMetadataReplicationClient.createSetOperationMessage(scope, key, value)).join();
-        } catch (CompletionException e) {
+            val message = ClusterMetadataReplicationClient.createSetOperationMessage(scope, key, value);
+            val future = client.send(message);
+            if (!async) future.join();
+        } catch (CompletionException e) { // TODO handle
             // throw (RaftException) e.getCause();
         }
 
         return previousValue;
+    }
+
+    public String put(String key, String value) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
+        return put(key, value, false);
+    }
+
+    public String putAsync(String key, String value) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
+        return put(key, value, true);
     }
 
     public String remove(String key) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
@@ -163,6 +187,54 @@ public class ReplicatedMetadataMap {
     public Set<Map.Entry<String, String>> entrySet() throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
         fetchCurrentData();
         return currentData.entrySet();
+    }
+
+    private static Object parseResultMapProto(MetadataOperationResultMapProto resultMapProto) {
+        if (resultMapProto.getIsNull()) {
+            return null;
+        }
+
+        if (resultMapProto.getIsLeaf()) {
+            return resultMapProto.getLeafValue();
+        }
+
+        return resultMapProto.getNodesMap().entrySet().stream()
+                .map(entry -> new AbstractMap.SimpleEntry<>(
+                        entry.getKey(),
+                        parseResultMapProto(entry.getValue())))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue
+                ));
+    }
+
+    public static Map<String, Map<String, String>> getFullMetaDataMap(ClusterMetadataReplicationClient client) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
+        val responseProto = client.sendAndExecuteOperationMessage(
+                ClusterMetadataReplicationClient.createGetAllOperationMessage(),
+                MetadataOperationResultProto.parser());
+
+        if (!responseProto.getStatus().equals(OperationResultStatus.OK)) {
+            // TODO throw exception
+            return null;
+        }
+
+        val resultMapProto = responseProto.getResult();
+
+        if (resultMapProto.getIsNull()) {
+            return new HashMap<>();
+        }
+
+        return (Map<String, Map<String, String>>) parseResultMapProto(resultMapProto);
+
+//        return resultMapProto.getNodesMap().entrySet().stream()
+//                .map(entry -> new AbstractMap.SimpleEntry<>(
+//                        entry.getKey(),
+//                        entry.getValue().getLeafValue()))
+//                .collect(Collectors.toMap(
+//                        Map.Entry::getKey,
+//                        Map.Entry::getValue
+//                ));
+
     }
 
     @SneakyThrows

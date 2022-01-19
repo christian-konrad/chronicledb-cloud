@@ -4,7 +4,27 @@ import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.counter.CounterOperationMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class CounterReplicationClient extends PartitionedRaftReplicationClient<CounterOperationMessage> {
+
+    // client instance registry
+    private static Map<String, CounterReplicationClient> INSTANCES;
+
+    public static CounterReplicationClient of(RaftConfig raftConfig, String partitionId) {
+        if (INSTANCES == null) {
+            INSTANCES = new HashMap<>();
+        }
+
+        if (!INSTANCES.containsKey(partitionId)) {
+            CounterReplicationClient client =
+                    new CounterReplicationClient(raftConfig, partitionId);
+            INSTANCES.put(partitionId, client);
+        }
+
+        return INSTANCES.get(partitionId);
+    }
 
     public String getCounterId() {
         return getPartitionId();

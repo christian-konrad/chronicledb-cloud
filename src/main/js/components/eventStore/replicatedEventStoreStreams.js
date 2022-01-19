@@ -3,9 +3,7 @@ import ApiClient from "../../api/apiClient";
 import Skeleton from '@material-ui/lab/Skeleton';
 import {Button, Card, CardContent, List, ListItem, ListItemText, Typography} from "@material-ui/core";
 import {withStyles} from '@material-ui/core/styles';
-import ErrorBoundary from "../error/errorBoundary";
-import { Add20 } from '@carbon/icons-react';
-import EventStore from './eventStore';
+import EventStoreStreamAccordionItem from "./eventStoreStreamAccordionItem";
 
 const useStyles = theme => ({
     addCounterButton: {
@@ -18,8 +16,7 @@ const useStyles = theme => ({
     }
 });
 
-class ReplicatedEventStores extends Component {
-    counterId;
+class ReplicatedEventStoreStreams extends Component {
 
     constructor(props) {
         super(props);
@@ -49,6 +46,8 @@ class ReplicatedEventStores extends Component {
         clearInterval(this.interval);
     }
 
+    // component={Link} to={`/admin/sys-info/nodes/${nodeId}`}
+
     render() {
         if (this.state.eventStreamNames == null) return <Skeleton />
 
@@ -57,7 +56,7 @@ class ReplicatedEventStores extends Component {
 
         return (
             <>
-                {eventStreamNames.map(eventStreamName => <EventStore key={eventStreamName} eventStreamName={eventStreamName} />)}
+                {eventStreamNames.map(eventStreamName => <EventStoreStreamAccordionItem key={eventStreamName} eventStreamName={eventStreamName} />)}
                 {/* TODO must add name and schema using a certain dialog */}
                 {/*<div className={classes.addButtonContainer}>*/}
                 {/*    <Button variant="outlined" startIcon={<Add20 />} onClick={() => this.createEventStore(`stream-${counterIds.length + 1}`)} className={classes.addCounterButton}>Add new stream</Button>*/}
@@ -66,4 +65,4 @@ class ReplicatedEventStores extends Component {
         )
     }
 }
-export default withStyles(useStyles)(ReplicatedEventStores)
+export default withStyles(useStyles)(ReplicatedEventStoreStreams)

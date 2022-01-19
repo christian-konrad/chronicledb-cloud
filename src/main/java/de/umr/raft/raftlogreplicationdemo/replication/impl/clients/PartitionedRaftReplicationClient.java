@@ -8,6 +8,8 @@ import org.apache.ratis.protocol.RaftGroup;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public abstract class PartitionedRaftReplicationClient<ExecutableMessageImpl extends ExecutableMessage> extends RaftReplicationClient<ExecutableMessageImpl> {

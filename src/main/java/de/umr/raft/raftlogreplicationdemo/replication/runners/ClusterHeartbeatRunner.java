@@ -1,9 +1,12 @@
 package de.umr.raft.raftlogreplicationdemo.replication.runners;
 
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterManagementMultiRaftServer;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata.ReplicatedMetadataMap;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
+import org.apache.ratis.server.RaftServer;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.ratis.util.Daemon;
 import org.slf4j.Logger;
@@ -11,12 +14,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static java.lang.System.currentTimeMillis;
 
-//@Component
+@Component
 @RequiredArgsConstructor(staticName = "of")
 public class ClusterHeartbeatRunner implements ApplicationRunner {
 
@@ -29,6 +38,9 @@ public class ClusterHeartbeatRunner implements ApplicationRunner {
     @Autowired
     private final RaftConfig raftConfig;
 
+    @Autowired
+    private final ClusterManagementMultiRaftServer clusterManagementMultiRaftServer;
+
     private Daemon daemon = null;
 
     @Override
@@ -40,18 +52,58 @@ public class ClusterHeartbeatRunner implements ApplicationRunner {
 
     private class HeartbeatSender implements Runnable {
 
-        ReplicatedMetadataMap replicatedMetaDataMap;
+        ReplicatedMetadataMap peerMetaData;
+        String currentPeerId;
 
         HeartbeatSender() {
-            replicatedMetaDataMap = ReplicatedMetadataMap.of(raftConfig.getCurrentPeerId(), client);
+            currentPeerId = raftConfig.getCurrentPeerId();
+            peerMetaData = ReplicatedMetadataMap.of(currentPeerId, client);
         }
 
         @Override
         public void run() {
 
+            // TODO have custom heartbeat service
+            // TODO have heartbeats in the management state machine AND DO NOT PERSIST AND REPLAY THE WHOLE LOG (need snapshots!)
+
             while (true) {
                 try {
-                    replicatedMetaDataMap.put("heartbeat", String.valueOf(currentTimeMillis()));
+                    //Instant start = Instant.now();
+
+                    // TODO also obtain and put current division infos
+                    if (clusterManagementMultiRaftServer.isRunning()) {
+                        peerMetaData.putAsync("heartbeat", String.valueOf(currentTimeMillis()));
+                        try {
+                            // division is the role this node has in the given group
+                            List<RaftServer.Division> divisions = clusterManagementMultiRaftServer.getAllDivisions();
+                            for (RaftServer.Division division : divisions) {
+                                val divisionMetaData = ReplicatedMetadataMap.ofDivision(division.getMemberId().toString(), client);
+                                val currentTerm = division.getInfo().getCurrentTerm();
+                                val lastAppliedIndex = division.getInfo().getLastAppliedIndex();
+                                val role = division.getInfo().getCurrentRole();
+                                val isAlive = division.getInfo().isAlive();
+
+                                // val serverMetrics = division.getRaftServerMetrics();
+                                // val logMetrics = division.getRaftLog().getRaftLogMetrics().toString();
+
+                                divisionMetaData.putAsync("currentTerm", String.valueOf(currentTerm));
+                                divisionMetaData.putAsync("lastAppliedIndex", String.valueOf(lastAppliedIndex));
+                                divisionMetaData.putAsync("role", role.name());
+                                divisionMetaData.putAsync("isAlive", String.valueOf(isAlive));
+
+                                // divisionMetaData.putAsync("serverMetrics", serverMetrics.toString());
+                                // divisionMetaData.putAsync("logMetrics", String.valueOf(logMetrics));
+                            }
+                            // TODO measure runtime for this, must be cheap!
+                        } catch (IOException | InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+
+                    //Instant finish = Instant.now();
+                    //long timeElapsed = Duration.between(start, finish).toMillis();
+                    //System.out.println("Putting heartbeat took " + timeElapsed + "ms");
                     Thread.sleep(raftConfig.getHeartbeatInterval());
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();

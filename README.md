@@ -6,6 +6,25 @@
  
 > 🚧 TODO Rename the whole package as it is no longer a "demo"
 
+# Build
+
+```
+mvn clean
+mvn frontend:yarn
+mvn frontend:webpack
+mnv package
+```
+
+## Compile protos after change
+
+```
+mvn clean
+mnv package
+```
+
+Package may fail as generated java classes change after protos are compiled,
+but they should be indexed by the IDE regardless.
+
 # Cluster Startup
 
 > 🚧 TODO Clean up, explain best practices for dev, explain using IntelliJ, explain how to build using maven (include yarn and protobuf builds), show simple examples

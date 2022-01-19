@@ -36,6 +36,35 @@ public class RaftConfig {
     @Value("${heartbeat.interval}")
     @Getter private int heartbeatInterval;
 
+    /**
+     *  If true, the events are buffered before inserting into
+     *  the event store.
+     *  Also see eventStoreBufferSize and eventStoreBufferTimeout
+     */
+    @Value("${eventstore.buffer.enabled}")
+    @Getter private boolean isEventStoreBufferEnabled;
+
+    /**
+     *  Size of the event buffer of the store in bytes.
+     *  Used to drastically improve write performance.
+     *  Events are on hold in the buffer before beeing written to disk in a batch.
+     *  Events in the buffer will be flushed if
+     *  - Buffer is full
+     *  - Timeout is reached
+     *  - Another command than an event insert is sent
+     *  ⚠ In case of any failure, all events in the buffer will be lost.
+     */
+    @Value("${eventstore.buffer.size}")
+    @Getter private long eventStoreBufferSize;
+
+    /**
+     *  Timeout in ms of the event buffer.
+     *  If the timeout is reached after the last insert attempt, the buffer is flushed
+     *  even if it isn't full
+     */
+    @Value("${eventstore.buffer.timeout}")
+    @Getter private int eventStoreBufferTimeout;
+
     // TODO should somehow obfuscate or combine metadata and actual raft port
     @Value("${metadata-port}")
     @Getter private String metadataPort;

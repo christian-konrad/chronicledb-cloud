@@ -17,15 +17,20 @@ public class EventStorePushEventOperationExecutor implements EventStoreTransacti
 
     @Override
     public CompletableFuture<EventStoreOperationResultProto> apply(EventStoreState eventStoreState) {
-        val eventProto = eventStoreOperation.getEvent();
+        val eventProtos = eventStoreOperation.getEventsList();
 
         // TODO catch errors and return success = false
 
         val eventStore = eventStoreState.getEventStore();
         val eventSerializer = EventSerializer.of(eventStore.getSchema());
         eventSerializer.setSerializationType(EventSerializationType.NATIVE);
-        val event = eventSerializer.fromProto(eventProto);
-        eventStore.pushEvent(event);
+        if (eventProtos.size() == 1) {
+            val event = eventSerializer.fromProto(eventProtos.get(0));
+            eventStore.pushEvent(event);
+        } else {
+            val events = eventSerializer.fromProto(eventProtos);
+            eventStore.pushEvents(events.iterator(), eventStoreOperation.getPushOptions().getIsOrdered());
+        }
 
         return CompletableFuture.completedFuture(createEventStoreOperationResult());
     }
@@ -39,6 +44,6 @@ public class EventStorePushEventOperationExecutor implements EventStoreTransacti
 
     @Override
     public EventStoreOperationType getOperationType() {
-        return EventStoreOperationType.PUSH_EVENT;
+        return EventStoreOperationType.PUSH_EVENTS;
     }
 }

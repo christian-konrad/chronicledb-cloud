@@ -9,6 +9,7 @@ import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Iterator;
 import java.util.List;
 
 public class EventStoreReplicationClient extends PartitionedRaftReplicationClient<EventStoreOperationMessage> {
@@ -21,6 +22,10 @@ public class EventStoreReplicationClient extends PartitionedRaftReplicationClien
         return EventStoreOperationMessage.Factory.createPushEventOperationMessage(event, eventSchema);
     }
 
+    public static EventStoreOperationMessage createPushBulkEventsOperationMessage(Iterator<Event> events, boolean ordered, EventSchema eventSchema) throws InvalidProtocolBufferException {
+        return EventStoreOperationMessage.Factory.createPushBulkEventsOperationMessage(events, ordered, eventSchema);
+    }
+
     public static EventStoreOperationMessage createGetAggregatesEventOperationMessage(Range<Long> range, List<? extends EventAggregate> list) {
         return EventStoreOperationMessage.Factory.createGetAggregatesEventOperationMessage(range, list);
     }
@@ -28,6 +33,22 @@ public class EventStoreReplicationClient extends PartitionedRaftReplicationClien
     public static EventStoreOperationMessage createGetKeyRangeEventOperationMessage() {
         return EventStoreOperationMessage.Factory.createGetKeyRangeEventOperationMessage();
     }
+
+    /*
+    Instant start = Instant.now();
+            val client = createClientForCounterId(counterId);
+            Instant finish = Instant.now();
+            long timeElapsed = Duration.between(start, finish).toMillis();
+            System.out.println("Creating client for counter took " + timeElapsed + "ms");
+
+            start = Instant.now();
+            val result = client.sendAndExecuteOperationMessage(
+                    operationMessage,
+                    CounterOperationResultProto.parser());
+            finish = Instant.now();
+            timeElapsed = Duration.between(start, finish).toMillis();
+            System.out.println("Sending message to counter client took " + timeElapsed + "ms");
+     */
 
     // TODO query message
 

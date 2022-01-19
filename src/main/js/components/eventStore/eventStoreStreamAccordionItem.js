@@ -5,13 +5,14 @@ import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
-    Button,
+    List,
     Typography
 } from "@material-ui/core";
 import {withStyles} from '@material-ui/core/styles';
 import ErrorBoundary from "../error/errorBoundary";
-import ReactJson from 'react-json-view';
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
+import InfoListItem from "../common/list/infoListItem";
+import LinkListItem from "../common/list/linkListItem";
 
 const useStyles = theme => ({
     accordionDetails: {
@@ -22,24 +23,9 @@ const useStyles = theme => ({
             fontWeight: 600,
         }
     },
-    pushEventBox: {
-        display: 'flex',
-        flexDirection: 'column'
-    },
-    pushEventButton: {
-        marginLeft: 24
-    },
-    streamDisplay: {
-        lineHeight: '34px',
-        fontWeight: 600
-    },
-    streamName: {
-        lineHeight: '34px',
-        marginRight: 'auto'
-    }
 });
 
-class EventStore extends Component {
+class EventStoreStreamAccordionItem extends Component {
     eventStreamName;
 
     constructor(props) {
@@ -47,7 +33,6 @@ class EventStore extends Component {
         this.eventStreamName = props.eventStreamName;
         this.state = { streamInfo: null };
         this.updateStreamInfo = this.updateStreamInfo.bind(this);
-        this.pushEvent = this.pushEvent.bind(this);
     }
 
     updateStreamInfo() {
@@ -58,29 +43,17 @@ class EventStore extends Component {
 
     componentDidMount() {
         this.updateStreamInfo();
-        // this.interval = setInterval(() => {
-        //     this.updateCounter();
-        // }, 1000);
     }
-
-    // TODO remove mock event
-    pushEvent(event) {
-        ApiClient.pushEvent(this.eventStreamName, event)
-            .then(() => this.updateStreamInfo());
-    }
-
-    _createMockEvent = () => ({
-        "someBool": true,
-        "someInt": 1,
-        "someString": "foo",
-        "TSTART": Date.now()
-    });
 
     render() {
         if (this.state.streamInfo == null) return <Skeleton />
 
         const { classes } = this.props;
         const streamInfo = this.state.streamInfo;
+
+        const { schema, eventCount, timeInterval } = streamInfo;
+
+        const formattedTimeInterval = timeInterval ? `${timeInterval.lower} - ${timeInterval.upper}` : 'No events yet';
 
         return (
             <Accordion variant="outlined">
@@ -94,9 +67,13 @@ class EventStore extends Component {
 
                 <AccordionDetails className={classes.accordionDetails}>
                     <ErrorBoundary>
-                        <div className={classes.pushEventBox}>
-                            <ReactJson src={streamInfo} />
-                            <Button variant="outlined" onClick={() => this.pushEvent(this._createMockEvent())} className={classes.pushEventButton}>Push some event</Button>
+                        <div>
+                            <List>
+                                <InfoListItem classes={classes} label="Event count" content={eventCount} />
+                                <InfoListItem classes={classes} label="Time interval" content={formattedTimeInterval} />
+                                <InfoListItem classes={classes} label="Attributes in schema" content={schema.length} />
+                                <LinkListItem classes={classes} label="Details" content="" to={`/admin/replicated-event-store/streams/${this.eventStreamName}`} />
+                            </List>
                         </div>
                     </ErrorBoundary>
                 </AccordionDetails>
@@ -104,4 +81,4 @@ class EventStore extends Component {
         )
     }
 }
-export default withStyles(useStyles)(EventStore)
+export default withStyles(useStyles)(EventStoreStreamAccordionItem)

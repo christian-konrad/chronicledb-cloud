@@ -60,6 +60,15 @@ public class StreamIndex implements EventStore {
         }
     }
 
+    public void pushEvents(Iterator<Event> events, boolean ordered) {
+        try {
+            eventStore.insert(events, ordered);
+        }
+        catch (IOException ex) {
+            throw new WrappingIOException("Could not insert events: " + events, ex);
+        }
+    }
+
     public long eventCount() throws IOException {
         return eventStore.getAggregate(new EventCount(), Long.class).orElse(0L);
     }
@@ -176,7 +185,6 @@ public class StreamIndex implements EventStore {
     }
 
     public EventAggregationValues getAggregates(Range<Long> range, List<? extends EventAggregate> list) throws IllegalStateException, IOException, EPRuntimeException {
-        log.info("Before getting aggregates from StreamIndex");
         return eventStore.getAggregates(range, list);
     }
 

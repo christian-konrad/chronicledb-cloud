@@ -62,6 +62,7 @@ public class EventStoreStateMachine extends ExecutableMessageStateMachine<EventS
         // TODO committing (Applying) an entry should not mean writing it to disc!
     }
 
+    // TODO ore just a "closeState"?
     @Override
     protected void clearState() {
         eventStoreState.clear();
@@ -71,6 +72,11 @@ public class EventStoreStateMachine extends ExecutableMessageStateMachine<EventS
     protected void restoreState(ObjectInputStream in) throws IOException, ClassNotFoundException {
         eventStoreState.loadFrom(in);
     }
+
+//    @Override
+//    public boolean getShouldLogTransactionRuntime() {
+//        return true;
+//    }
 
     @Override
     protected EventStoreOperationMessage createExecutableMessageOf(ByteString byteString) throws InvalidProtocolBufferException {

@@ -1,5 +1,7 @@
 package de.umr.raft.raftlogreplicationdemo.replication.impl.facades.eventstore;
 
+import de.umr.chronicledb.common.query.range.Range;
+import de.umr.chronicledb.event.store.tabPlus.aggregation.impl.EventAggregate;
 import de.umr.event.Event;
 import de.umr.event.schema.EventSchema;
 import de.umr.event.schema.SchemaProvider;
@@ -14,7 +16,7 @@ import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetada
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.EventStoreReplicationClient;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.EventStoreStateMachine;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.StreamInfo;
-import de.umr.raft.raftlogreplicationdemo.services.sysinfo.SystemInfoService;
+import de.umr.raft.raftlogreplicationdemo.services.impl.sysinfo.SystemInfoService;
 import de.umr.raft.raftlogreplicationdemo.util.RaftGroupUtil;
 import lombok.SneakyThrows;
 import lombok.val;
@@ -26,6 +28,8 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.text.ParseException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
@@ -64,7 +68,8 @@ public class ReplicatedChronicleEngine implements SchemaProvider, AutoCloseable 
         List<String> streamNames = getStreamNames();
         for (String name : streamNames) {
             val client = new EventStoreReplicationClient(raftConfig, name);
-            eventStoreProvider.put(ReplicatedEventStore.of(name, client));
+            eventStoreProvider.put(BufferedReplicatedEventStore.of(name, client,
+                    raftConfig.getEventStoreBufferSize(), raftConfig.getEventStoreBufferTimeout()));
         }
         eventStoreProviderInitialized = true;
     }
@@ -84,8 +89,20 @@ public class ReplicatedChronicleEngine implements SchemaProvider, AutoCloseable 
     }
 
     public StreamInfo getStreamInfo(String name) throws IOException {
-        ReplicatedEventStore eventStore = getEventStoreProvider().get(name);
+        BufferedReplicatedEventStore eventStore = getEventStoreProvider().get(name);
         return new StreamInfo(name, eventStore.eventCount(), eventStore.getKeyRange().orElse(null), eventStore.getSchema());
+    }
+
+    public Optional<?> getAggregate(String streamName, Range<Long> keyRange, EventAggregate aggregate)
+            throws IllegalStateException, IOException {
+        BufferedReplicatedEventStore eventStore = getEventStoreProvider().get(streamName);
+        return eventStore.getAggregate(keyRange, aggregate);
+    }
+
+    public Optional<?> getAggregate(String streamName, EventAggregate aggregate)
+            throws IllegalStateException, IOException {
+        BufferedReplicatedEventStore eventStore = getEventStoreProvider().get(streamName);
+        return eventStore.getAggregate(aggregate);
     }
 
     public synchronized EventStoreProvider registerStream(String name, EventSchema schema) throws IOException {
@@ -104,8 +121,14 @@ public class ReplicatedChronicleEngine implements SchemaProvider, AutoCloseable 
         */
     }
 
-    public void pushEvent(String stream, Event event) throws IOException {
-        getEventStoreProvider().get(stream).insert(event);
+    public void pushEvent(String stream, Event event) throws IOException, InterruptedException {
+        val eventStore = getEventStoreProvider().get(stream);
+
+        if (raftConfig.isEventStoreBufferEnabled()) {
+            eventStore.insertBuffered(event);
+        } else {
+            eventStore.insert(event);
+        }
     }
 
     public synchronized void removeStream(String name) throws IOException {
@@ -155,18 +178,18 @@ public class ReplicatedChronicleEngine implements SchemaProvider, AutoCloseable 
         //return new QueryResponse(eventCursor, eventSchema);
     }
 
-    public static class EventStoreProvider implements Iterable<ReplicatedEventStore> {
+    public static class EventStoreProvider implements Iterable<BufferedReplicatedEventStore> {
 
-        private final Map<String, ReplicatedEventStore> eventStores = new HashMap<>();
+        private final Map<String, BufferedReplicatedEventStore> eventStores = new HashMap<>();
 
-        public void put(ReplicatedEventStore eventStore) {
+        public void put(BufferedReplicatedEventStore eventStore) {
             if (eventStores.containsKey(eventStore.getStreamName().toUpperCase())) {
                 throw new IllegalArgumentException("Stream \"" + eventStore.getStreamName() + "\" already exists.");
             }
             eventStores.put(eventStore.getStreamName().toUpperCase(), eventStore);
         }
 
-        public ReplicatedEventStore get(String name) {
+        public BufferedReplicatedEventStore get(String name) {
             return Optional.ofNullable(eventStores.get(name.toUpperCase()))
                     .orElseThrow(() -> new IllegalArgumentException("Stream \"" + name + "\" does not exist.") );
         }
@@ -175,24 +198,24 @@ public class ReplicatedChronicleEngine implements SchemaProvider, AutoCloseable 
             return eventStores.containsKey(name.toUpperCase());
         }
 
-        private ReplicatedEventStore remove(String name) {
+        private BufferedReplicatedEventStore remove(String name) {
             return Optional.ofNullable(eventStores.remove(name.toUpperCase()))
                     .orElseThrow(() -> new IllegalArgumentException("Stream \"" + name + "\" does not exist.") );
         }
 
-        public Set<Map.Entry<String, ReplicatedEventStore>> entrySet() {
+        public Set<Map.Entry<String, BufferedReplicatedEventStore>> entrySet() {
             return eventStores.entrySet();
         }
 
         @Override
-        public Iterator<ReplicatedEventStore> iterator() {
+        public Iterator<BufferedReplicatedEventStore> iterator() {
             return eventStores.values().iterator();
         }
 
         public void closeAll() throws IOException {
             List<Throwable> errors = new ArrayList<>();
 
-            for (ReplicatedEventStore value : eventStores.values()) {
+            for (BufferedReplicatedEventStore value : eventStores.values()) {
                 try {
                     value.close();
                 }

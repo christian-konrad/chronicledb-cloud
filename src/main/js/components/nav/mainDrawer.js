@@ -7,10 +7,9 @@ import Divider from '@material-ui/core/Divider';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import { Network_420, EdgeNodeAlt20, Calculation20, DataStructured20, MessageQueue20 } from '@carbon/icons-react';
+import { Network_420, EdgeNodeAlt20, Calculation20, DataStructured20, MessageQueue20, AppConnectivity20 } from '@carbon/icons-react';
 import { Link, useLocation } from "react-router-dom";
 import {ListSubheader} from "@material-ui/core";
-import ReplicatedKeyValueStorePage from "../pages/replicatedKeyValueStore";
 
 const drawerWidth = 260;
 
@@ -65,6 +64,11 @@ export default function MainDrawer() {
                         text="Raft groups"
                         to="/admin/raft-groups"
                         icon={<Network_420 />} />
+                    <DrawerListItem
+                        id="meta-data"
+                        text="Meta data"
+                        to="/admin/meta-data"
+                        icon={<AppConnectivity20 />} />
                 </List>
                 <Divider/>
                 <List

@@ -14,10 +14,10 @@ import java.util.concurrent.CompletableFuture;
 public interface EventStoreOperationExecutor<ResultType extends Message> extends OperationExecutor<EventStoreState, ResultType> {
     static EventStoreOperationExecutor of(EventStoreOperationProto eventStoreOperation) {
         switch (eventStoreOperation.getOperationType()) {
-            case PUSH_EVENT:
+            case PUSH_EVENTS:
                 return EventStorePushEventOperationExecutor.of(eventStoreOperation);
             // case QUERY:
-            //     return MetadataDeleteOperationExecutor.of(eventStoreOperation);
+            //     return EventStoreQueryOperationExecutor.of(eventStoreOperation);
             case AGGREGATE:
                 return EventStoreGetAggregatesOperationExecutor.of(eventStoreOperation);
             case GET_KEY_RANGE:

@@ -23,6 +23,8 @@ import org.apache.ratis.util.AutoCloseableLock;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -31,6 +33,16 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * State machine that runs executable messages
  */
 public abstract class ExecutableMessageStateMachine<StateObjectClass, ExecutableMessageImpl extends ExecutableMessage, ExecutionResultProto extends org.apache.ratis.thirdparty.com.google.protobuf.Message> extends BaseStateMachine {
+
+//    im FileStoreExample:
+//
+//            - Statt RaftLog wird instant in den FileStore geschrieben
+//- Die Transactions auf der Statemachine selber markieren die Daten dann nur als "committed" im FileStore
+//- in startTransaction werden die direkt schreibenden Messages "abgefangen" und modifiziert, damit nur Metadaten in die Statemachine geschrieben werden, während die echten Daten im FileStore sind
+//
+//- Analogie zum EventStore:
+//            - Entweder dort auch Indexeinträge als Committed markieren oder einfach dank der AppendOnly Annahme (außerhalb von OOO) einen Pointer setzen - in dem EventStoreState wrapper
+
 
     // TODO have another extending abstract class with a custom, segmented state machine storage for chronicle
     protected final SimpleStateMachineStorage storage = new SimpleStateMachineStorage();
@@ -87,6 +99,7 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
         this.storageDir = raftStorage.getStorageDir();
         val snapshot = storage.getLatestSnapshot();
         initState();
+        // TODO fileStore example does not load any snapshots..
         loadSnapshot(snapshot);
     }
 
@@ -230,7 +243,7 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
               .getActualTypeArguments()[0];
          */
 
-         LOG.info("QUERY - Before executing the message");
+         // LOG.info("QUERY - Before executing the message");
 
         try (AutoCloseableLock readLock = readLock()) {
             // actual execution of the command
@@ -249,6 +262,21 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
     }
 
     /**
+     * Override to run side effects or modify the transaction context before applying a transaction
+     */
+    public void beforeApplyTransaction(TransactionContext trx) {}
+
+    /**
+     * Override to run side effects or modify the transaction result after applying a transaction
+     */
+    public void afterApplyTransaction(ExecutionResultProto result) {}
+
+    // TODO remove after tests
+    public boolean getShouldLogTransactionRuntime() {
+        return false;
+    }
+
+    /**
      * Apply executable message operations on the state machine
      *
      * @param trx the transaction context
@@ -257,6 +285,9 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
     @SneakyThrows
     @Override
     public CompletableFuture<Message> applyTransaction(TransactionContext trx) {
+
+        beforeApplyTransaction(trx);
+        Instant start = Instant.now();
 
         final RaftProtos.LogEntryProto entry = trx.getLogEntry();
         // TODO remove sneaky throws and add actual error handling
@@ -294,6 +325,8 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
 
         // LOG.info("TRANSACTION - After executing the message");
 
+        afterApplyTransaction(result);
+
         // confirm execution (TODO or else return error)
         final CompletableFuture<Message> response =
                 CompletableFuture.completedFuture(Message.valueOf(result.toByteString()));
@@ -301,14 +334,21 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
         // LOG.info("TRANSACTION - Before wrapping in response");
 
         // log what happened
-        final RaftProtos.RaftPeerRole role = trx.getServerRole();
-        if (role == RaftProtos.RaftPeerRole.LEADER) {
-            LOG.info("{}:{}-{}: {}", role, getId(), index, executableMessage);
-        } else {
-            LOG.debug("{}:{}-{}: {}", role, getId(), index, executableMessage);
-        }
-        if (LOG.isTraceEnabled()) {
-            LOG.trace("{}-{}: state={}", getId(), index, getStateObject());
+//        final RaftProtos.RaftPeerRole role = trx.getServerRole();
+//        if (role == RaftProtos.RaftPeerRole.LEADER) {
+//            LOG.info("{}:{}-{}: {}", role, getId(), index, executableMessage);
+//        } else {
+//            LOG.debug("{}:{}-{}: {}", role, getId(), index, executableMessage);
+//        }
+//        if (LOG.isTraceEnabled()) {
+//            LOG.trace("{}-{}: state={}", getId(), index, getStateObject());
+//        }
+
+        Instant end = Instant.now();
+
+        if (getShouldLogTransactionRuntime()) {
+            long timeElapsed = Duration.between(start, end).toMillis();
+            LOG.info("Executing transaction took " + timeElapsed + "ms");
         }
 
         return response;

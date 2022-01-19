@@ -5,7 +5,7 @@ import MainLayout from "../layouts/mainLayout";
 import {Card, CardContent, Container} from "@material-ui/core";
 import ErrorBoundary from "../components/error/errorBoundary";
 import {withStyles} from '@material-ui/core/styles';
-import ReplicatedEventStores from "../components/eventStore/replicatedEventStores";
+import ReplicatedEventStoreStreams from "../components/eventStore/replicatedEventStoreStreams";
 
 const useStyles = theme => ({
     cardContent: {
@@ -30,7 +30,7 @@ class ReplicatedEventStorePage extends Component {
                 <Container maxWidth="md">
                     <h2>Replicated ChronicleDB Event Store</h2>
                     <ErrorBoundary>
-                        <ReplicatedEventStores />
+                        <ReplicatedEventStoreStreams />
                     </ErrorBoundary>
                 </Container>
             </MainLayout>

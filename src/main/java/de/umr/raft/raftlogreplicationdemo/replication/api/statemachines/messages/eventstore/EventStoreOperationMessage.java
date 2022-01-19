@@ -16,6 +16,7 @@ import lombok.val;
 import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -39,7 +40,7 @@ public class EventStoreOperationMessage implements ExecutableMessage<EventStoreS
     @Override
     public boolean isTransactionMessage() {
         switch (eventStoreOperation.getOperationType()) {
-            case PUSH_EVENT:
+            case PUSH_EVENTS:
                 return true;
         }
         return false;
@@ -72,8 +73,21 @@ public class EventStoreOperationMessage implements ExecutableMessage<EventStoreS
             val eventProto = eventSerializer.toProto(event);
 
             val eventStoreOperation = EventStoreOperationProto.newBuilder()
-                    .setOperationType(EventStoreOperationType.PUSH_EVENT)
-                    .setEvent(eventProto)
+                    .setOperationType(EventStoreOperationType.PUSH_EVENTS)
+                    .addEvents(eventProto)
+                    .build();
+
+            return EventStoreOperationMessage.of(eventStoreOperation);
+        }
+
+        public static EventStoreOperationMessage createPushBulkEventsOperationMessage(Iterator<Event> events, boolean ordered, EventSchema eventSchema) {
+            val eventSerializer = createEventSerializer(eventSchema);
+            val eventsProto = eventSerializer.toProto(events);
+
+            val eventStoreOperation = EventStoreOperationProto.newBuilder()
+                    .setOperationType(EventStoreOperationType.PUSH_EVENTS)
+                    .addAllEvents(() -> eventsProto)
+                    .setPushOptions(PushOptionsProto.newBuilder().setIsOrdered(ordered).build())
                     .build();
 
             return EventStoreOperationMessage.of(eventStoreOperation);

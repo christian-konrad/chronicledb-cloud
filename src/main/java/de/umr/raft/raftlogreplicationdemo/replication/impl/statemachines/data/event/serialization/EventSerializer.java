@@ -16,6 +16,9 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 // TODO should cache the serializer per eventSchema and serializationType
 @RequiredArgsConstructor(staticName = "of")
@@ -46,6 +49,10 @@ public class EventSerializer {
 //
 //        val payload = eventProto.getPayloadList();
 //        return new SimpleEvent(payload, t1, t2);
+    }
+
+    public List<Event> fromProto(List<EventProto> eventProtos) {
+        return eventProtos.stream().map(this::fromProto).collect(Collectors.toList());
     }
 
     /**
@@ -86,7 +93,7 @@ public class EventSerializer {
      *
      * @return The size in bytes required to serialize the current event.
      */
-    private int getEstimatedEventSize(Event event) {
+    public int getEstimatedEventSize(Event event) {
         var tmpSize = Long.BYTES; // TODO why initial byte?
         var nullAttribs = 0;
 
@@ -102,6 +109,7 @@ public class EventSerializer {
     }
 
     private ByteBuffer serializeEventToByteBuffer(Event event, de.umr.chronicledb.event.serialization.EventSerializer serializer, int currentAttemptedBufferSize, int currentAttempt) {
+        // TODO print to log of there is more than one attempt
         if (currentAttempt > 4) {
             // should never need to double buffer size 4 times...
             throw new BufferOverflowException();
@@ -137,5 +145,24 @@ public class EventSerializer {
         throw new UnsupportedOperationException("Currently only native (Java ChronicleDB) serialization is supported");
 
         // TODO build proto serialization as allocating byte buffers is kind of a nightmare
+    }
+
+    public Iterator<EventProto> toProto(Iterator<Event> events) {
+        return new Iterator<EventProto>() {
+            @Override
+            public boolean hasNext() {
+                return events.hasNext();
+            }
+
+            @Override
+            public EventProto next() {
+                try {
+                    return toProto(events.next());
+                } catch (InvalidProtocolBufferException e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+        };
     }
 }

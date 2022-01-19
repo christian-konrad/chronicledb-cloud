@@ -108,6 +108,12 @@
 			<artifactId>lambda-jepc-ql</artifactId>
 			<version>${lambda-jepc-ql.version}</version>
 		</dependency>
+
+<!--		<dependency>-->
+<!--			<groupId>com.google.protobuf</groupId>-->
+<!--			<artifactId>protobuf-java-util</artifactId>-->
+<!--			<version>3.19.3</version>-->
+<!--		</dependency>-->
 		<!-- Protocol buffers for java -->
 		<!-- no external dependency needed as it is included in ratis, -->
 		<!-- but we need to replace dependencies created by protoc on maven build -->

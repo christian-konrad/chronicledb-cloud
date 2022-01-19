@@ -23,4 +23,8 @@ public abstract class ReplicatedService<ReplicationClientImpl extends RaftReplic
     protected <ReturnType> CompletableFuture<ReturnType> wrapInCompletableFuture(Callable<ReturnType> callable) {
         return FutureUtil.wrapInCompletableFuture(callable);
     }
+
+    protected <ReturnType> CompletableFuture<ReturnType> wrapInCompletableFuture(Callable<ReturnType> callable, String threadPoolKey) {
+        return FutureUtil.wrapInCompletableFuture(callable, threadPoolKey);
+    }
 }

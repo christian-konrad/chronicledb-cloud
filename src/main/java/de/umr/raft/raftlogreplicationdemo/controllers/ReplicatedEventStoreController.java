@@ -1,24 +1,25 @@
 package de.umr.raft.raftlogreplicationdemo.controllers;
 
 import de.umr.chronicledb.common.query.range.Range;
+import de.umr.chronicledb.event.store.tabPlus.aggregation.impl.EventAggregate;
 import de.umr.event.Event;
-import de.umr.event.schema.EventSchema;
 import de.umr.event.schema.SchemaException;
-import de.umr.jepc.v2.api.epa.EPA;
 import de.umr.raft.raftlogreplicationdemo.models.eventstore.CreateStreamRequest;
 import de.umr.raft.raftlogreplicationdemo.models.eventstore.InsertEventRequest;
 import de.umr.raft.raftlogreplicationdemo.models.eventstore.QueryRequest;
 import de.umr.raft.raftlogreplicationdemo.models.eventstore.QueryResponse;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.eventstore.ReplicatedChronicleEngine;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.StreamInfo;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.query.QueryDescription;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.serialization.AggregateRequestSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -40,11 +41,42 @@ public class ReplicatedEventStoreController {
         return chronicleEngine.getStreamInfo(streamName);
     }
 
-    // TODO aggregate endpoint
+    // TODO matrix param
+    @GetMapping(value = {
+            "/streams/{streamName}/aggregates/{aggregateType}",
+            "/streams/{streamName}/aggregates/{aggregateType}/{attributeName}"
+    })
+    public Object getAggregate(@PathVariable String streamName,
+                                   @PathVariable String aggregateType,
+                                   @PathVariable Optional<String> attributeName,
+                                   @RequestParam Optional<Long> rangeStart, @RequestParam Optional<Long> rangeEnd,
+                                   @RequestParam Optional<Boolean> lowerInclusive, @RequestParam Optional<Boolean> upperInclusive) throws IOException, ResponseStatusException, UnsupportedOperationException {
+
+        if (rangeStart.isPresent() ^ rangeEnd.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Both start and end of the range must be specified");
+        }
+
+        EventAggregate aggregate;
+        try {
+            aggregate = AggregateRequestSerializer.createAggregate(attributeName, aggregateType);
+
+        }  catch (UnsupportedOperationException | IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+
+        boolean isRangeSpecified = rangeStart.isPresent() && rangeEnd.isPresent();
+
+        if (isRangeSpecified) {
+            Range<Long> range = new Range<>(rangeStart.get(), rangeEnd.get(), lowerInclusive.orElse(true), upperInclusive.orElse(true));
+            return chronicleEngine.getAggregate(streamName, range, aggregate).orElse(null);
+        } else {
+            return chronicleEngine.getAggregate(streamName, aggregate).orElse(null);
+        }
+    }
 
     @PostMapping(value = "/streams/{streamName}/events")
     @ResponseStatus(HttpStatus.OK)
-    public void insertEvents(@PathVariable String streamName, @RequestBody InsertEventRequest input) throws IOException {
+    public void insertEvents(@PathVariable String streamName, @RequestBody InsertEventRequest input) throws IOException, InterruptedException {
         for (Event e : input.getEvents())
             chronicleEngine.pushEvent(streamName, e);
     }

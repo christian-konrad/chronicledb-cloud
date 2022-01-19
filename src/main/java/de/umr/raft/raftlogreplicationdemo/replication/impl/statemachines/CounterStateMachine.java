@@ -1,34 +1,14 @@
 package de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines;
 
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.CounterOperationResultProto;
-import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperationResultProto;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.counter.CounterOperationMessage;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.metadata.MetadataOperationMessage;
 import org.apache.ratis.proto.RaftProtos;
-import org.apache.ratis.protocol.Message;
-import org.apache.ratis.protocol.RaftGroupId;
-import org.apache.ratis.server.RaftServer;
-import org.apache.ratis.server.protocol.TermIndex;
-import org.apache.ratis.server.raftlog.RaftLog;
-import org.apache.ratis.server.storage.RaftStorage;
-import org.apache.ratis.statemachine.TransactionContext;
-import org.apache.ratis.statemachine.impl.BaseStateMachine;
-import org.apache.ratis.statemachine.impl.SimpleStateMachineStorage;
-import org.apache.ratis.statemachine.impl.SingleFileSnapshotInfo;
 import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.ratis.util.JavaUtils;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.nio.charset.Charset;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -66,6 +46,18 @@ public class CounterStateMachine extends ExecutableMessageStateMachine<AtomicInt
     @Override
     protected void restoreState(ObjectInputStream in) throws IOException, ClassNotFoundException {
         counter.set(JavaUtils.cast(in.readObject()));
+    }
+
+//    @Override
+//    public CompletableFuture<?> write(LogEntryProto entry) {
+//    }
+
+    @Override
+    public CompletableFuture<ByteString> read(RaftProtos.LogEntryProto entry) {
+        // if log entries do not contain any data, this is called
+        LOG.info("=========================");
+        LOG.info("SPECIAL READ CALLED");
+        return null;
     }
 
     @Override

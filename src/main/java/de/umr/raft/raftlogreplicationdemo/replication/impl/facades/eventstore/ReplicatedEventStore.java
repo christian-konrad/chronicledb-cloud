@@ -25,6 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,7 +44,7 @@ public class ReplicatedEventStore implements AggregatedEventStore {
 
     @Override
     public EventSchema getSchema() {
-        // TODO implement via GetSchemaOperationMessage
+        // TODO implement via GetSchemaOperationMessage, but do not forget to cache
         return new DemoEventSchemaProvider().getSchema("DEMO");
     }
 
@@ -121,14 +124,15 @@ public class ReplicatedEventStore implements AggregatedEventStore {
         return getAggregate(new EventCount(), Long.class).orElse(0L);
     }
 
+    // TODO also async?
     @Override
     public void insert(Event event) throws IllegalStateException, IOException {
         // TODO must always obtain schema first; then cache schema
         EventStoreOperationResultProto responseProto = null;
         try {
             responseProto = client.sendAndExecuteOperationMessage(
-                    EventStoreReplicationClient.createPushEventOperationMessage(event, getSchema()),
-                    EventStoreOperationResultProto.parser());
+                    EventStoreReplicationClient.createPushEventOperationMessage(event, getSchema()),  // 60500ns -> 0.06ms
+                    EventStoreOperationResultProto.parser()); // 100ns
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
             throw new UnsupportedOperationException("Could not insert event");
@@ -138,6 +142,34 @@ public class ReplicatedEventStore implements AggregatedEventStore {
             // TODO throw more meaningful exception
             throw new UnsupportedOperationException();
         }
+    }
+
+    @Override
+    public void insert(Iterator<Event> events, boolean ordered) throws IllegalStateException, IOException {
+        // TODO must always obtain schema first; then cache schema
+
+        // TODO measure time
+
+        Instant start = Instant.now();
+
+        EventStoreOperationResultProto responseProto = null;
+        try {
+            responseProto = client.sendAndExecuteOperationMessage(
+                    EventStoreReplicationClient.createPushBulkEventsOperationMessage(events, ordered, getSchema()),
+                    EventStoreOperationResultProto.parser());
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            throw new UnsupportedOperationException("Could not insert events");
+        }
+
+        if (!responseProto.getStatus().equals(OperationResultStatus.OK)) {
+            // TODO throw more meaningful exception
+            throw new UnsupportedOperationException();
+        }
+
+        Instant finish = Instant.now();
+        long timeElapsed = Duration.between(start, finish).toMillis();
+        LOG.info("Pushing events in bulk took " + timeElapsed + "ms");
     }
 
     @Override
@@ -152,7 +184,7 @@ public class ReplicatedEventStore implements AggregatedEventStore {
         return true;
     }
 
-    private ReplicatedEventStore(String streamName, EventStoreReplicationClient client) {
+    protected ReplicatedEventStore(String streamName, EventStoreReplicationClient client) {
         this.streamName = streamName;
         this.client = client;
     }

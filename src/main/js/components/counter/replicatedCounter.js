@@ -3,7 +3,6 @@ import ApiClient from "../../api/apiClient";
 import Skeleton from '@material-ui/lab/Skeleton';
 import {Button, Card, CardContent, List, ListItem, ListItemText, Typography} from "@material-ui/core";
 import {withStyles} from '@material-ui/core/styles';
-import NodeList from "../nodeList";
 import ErrorBoundary from "../error/errorBoundary";
 import ReplicatedCounters from "./replicatedCounters";
 

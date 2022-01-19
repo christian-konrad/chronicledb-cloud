@@ -1,11 +1,7 @@
 package de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event;
 
-import de.umr.chronicledb.event.store.EventStore;
-import de.umr.chronicledb.event.store.tabPlus.TABPlusEventStore;
-import de.umr.event.schema.Attribute;
 import de.umr.event.schema.EventSchema;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.data.StateMachineState;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.MultiRaftReplicationServer;
 import lombok.Getter;
 import org.apache.ratis.util.FileUtils;
 import org.apache.ratis.util.JavaUtils;
@@ -14,8 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 // TODO some interface?

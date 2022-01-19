@@ -11,7 +11,7 @@ import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.Counter
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.CounterStateMachineProvider;
 import de.umr.raft.raftlogreplicationdemo.services.ICounterService;
 import de.umr.raft.raftlogreplicationdemo.services.ReplicatedService;
-import de.umr.raft.raftlogreplicationdemo.services.sysinfo.SystemInfoService;
+import de.umr.raft.raftlogreplicationdemo.services.impl.sysinfo.SystemInfoService;
 import de.umr.raft.raftlogreplicationdemo.util.RaftGroupUtil;
 import lombok.val;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -33,13 +35,18 @@ public class ReplicatedCounterService extends ReplicatedService implements ICoun
     @Autowired
     SystemInfoService systemInfoService;
 
+    /**
+     * Obtains a client from the registry or creates a new one if missing
+     */
     private CounterReplicationClient createClientForCounterId(String counterId) {
-        return new CounterReplicationClient(raftConfig, counterId);
+        return CounterReplicationClient.of(raftConfig, counterId);
     }
 
     private CompletableFuture<Integer> sendAndExecuteOperationMessage(String counterId, CounterOperationMessage operationMessage) {
         return wrapInCompletableFuture(() -> {
-            val result = createClientForCounterId(counterId).sendAndExecuteOperationMessage(
+            val client = createClientForCounterId(counterId);
+
+            val result = client.sendAndExecuteOperationMessage(
                     operationMessage,
                     CounterOperationResultProto.parser());
 
@@ -49,7 +56,7 @@ public class ReplicatedCounterService extends ReplicatedService implements ICoun
             }
 
             return result.getCounterValue();
-        });
+        }, counterId);
     }
 
     @Override

@@ -52,8 +52,6 @@ public class InsertEventRequestDeserializer extends JsonDeserializer<InsertEvent
 		Map map = (Map) request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
 		String streamName = (String) map.get("streamName");
 
-		// TODO we don't want to include streamName in json payload but in path, how to get it here?
-		//final String streamName = node.get("streamName").asText();
 		final EventSchema schema = engine.getSchema(streamName);
 		final EventDeserializer ed = new EventDeserializer(schema);
 		
