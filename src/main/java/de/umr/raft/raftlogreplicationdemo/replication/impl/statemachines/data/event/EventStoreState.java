@@ -51,7 +51,7 @@ public class EventStoreState implements StateMachineState {
 
     // TODO remove after test
     private EventSchema createSimpleSchema() {
-        return new DemoEventSchemaProvider().getSchema("DEMO");
+        return new DemoEventSchemaProvider().getSchema("CEBS2022");
     }
 
     /**

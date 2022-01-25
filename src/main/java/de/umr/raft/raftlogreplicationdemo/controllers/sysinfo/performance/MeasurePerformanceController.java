@@ -18,6 +18,8 @@ public class MeasurePerformanceController {
     @Autowired MeasureCounterPerformanceService measureCounterPerformanceService;
     @Autowired MeasureMetadataPerformanceService measureMetadataPerformanceService;
 
+    // TODO remove crossOrigin later
+    @CrossOrigin
     @GetMapping("/measure/event-store/insert-events/{count}")
     public String runInsertIntoEventStoreMeasurements(@PathVariable Integer count, @RequestParam Optional<Integer> batchSize) throws IOException, ExecutionException, InterruptedException {
         return measureEventStorePerformanceService.runInsertIntoEventStoreMeasurements(count, batchSize).get();
@@ -45,6 +47,7 @@ public class MeasurePerformanceController {
 
     // TODO aggregate event
 
+    // TODO remove crossOrigin later
     @CrossOrigin
     @GetMapping("/measure/counter/replicated/increment/{count}")
     public String runIncrementReplicatedCounterMeasurements(@PathVariable Integer count, @RequestParam Optional<Integer> batchSize) throws IOException, ExecutionException, InterruptedException {

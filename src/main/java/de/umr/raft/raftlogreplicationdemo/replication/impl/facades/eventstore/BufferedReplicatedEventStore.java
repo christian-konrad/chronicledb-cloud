@@ -37,7 +37,6 @@ import java.util.stream.Stream;
 public class BufferedReplicatedEventStore extends ReplicatedEventStore {
 
     private final EventBuffer eventBuffer;
-
     Logger LOG = LoggerFactory.getLogger(BufferedReplicatedEventStore.class);
 
     // TODO future?
@@ -63,6 +62,7 @@ public class BufferedReplicatedEventStore extends ReplicatedEventStore {
         Function<List<Event>, Long> onFlush = (events) -> {
             try {
                 val eventCount = events.stream().count();
+                // the buffer sorts events before flushing, so we set ordered to true
                 insert(events.iterator(), true);
                 return eventCount;
             } catch (IOException e) {
@@ -75,6 +75,7 @@ public class BufferedReplicatedEventStore extends ReplicatedEventStore {
                 .timeOutMillis(bufferTimeout)
                 .eventSerializer(eventSerializer)
                 .onFlush(onFlush)
+                .sortBeforeFlush(true)
                 .build();
     }
 

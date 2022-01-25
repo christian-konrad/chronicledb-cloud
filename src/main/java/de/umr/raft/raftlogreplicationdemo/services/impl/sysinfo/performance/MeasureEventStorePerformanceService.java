@@ -16,13 +16,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 @Service
 public class MeasureEventStorePerformanceService extends MeasurePerformanceService {
@@ -36,23 +38,75 @@ public class MeasureEventStorePerformanceService extends MeasurePerformanceServi
     @Autowired
     RaftConfig raftConfig;
 
-    Object[] getRandomEventPayload() {
-        return new Object[]{true, 42, "TEST"};  // TODO randomize
+//    Object[] getRandomEventPayload() {
+//        return new Object[]{true, 42, "TEST"};  // TODO randomize
+//    }
+
+    enum SecurityType {
+        EQUITY, INDEX;
+
+        private static final List<SecurityType> VALUES =
+                List.of(values());
+        private static final int SIZE = VALUES.size();
+        private static final Random RANDOM = new Random();
+
+        public static SecurityType random()  {
+            return VALUES.get(RANDOM.nextInt(SIZE));
+        }
     }
 
-    List<Event> getTestEvents(int count) {
+    enum TradeSymbol {
+        TSLA(SecurityType.EQUITY), DAX(SecurityType.INDEX), MXWO(SecurityType.INDEX), NDX(SecurityType.INDEX), GOOG(SecurityType.EQUITY), MSFT(SecurityType.EQUITY), BNTX(SecurityType.EQUITY);
+
+        private SecurityType securityType;
+
+        TradeSymbol(SecurityType securityType) {
+            this.securityType = securityType;
+        }
+
+        public SecurityType getSecurityType() {
+            return securityType;
+        }
+
+        private static final List<TradeSymbol> VALUES =
+                List.of(values());
+        private static final int SIZE = VALUES.size();
+        private static final Random RANDOM = new Random();
+
+        public static TradeSymbol random()  {
+            return VALUES.get(RANDOM.nextInt(SIZE));
+        }
+    }
+
+    private Random priceRandom = new Random();
+
+    private float getRandomStockPrice() {
+        return new BigDecimal(0.001 + priceRandom.nextFloat() * (99.999 - 0.001)).setScale(3, RoundingMode.HALF_UP).floatValue();
+    }
+
+    Object[] getRandomEventPayload() {
+        TradeSymbol tradeSymbol = TradeSymbol.random();
+        return new Object[]{
+                tradeSymbol.name(),
+                tradeSymbol.securityType.ordinal(),
+                getRandomStockPrice()
+        };
+    }
+
+    List<Event> getTestEvents(long count) {
         // TODO is inclusive range?
 
-        int rangeMax = count;
-        int factor = 1000;
-        long nanos = System.currentTimeMillis() * 10000000 - rangeMax * factor;
+        long gap = 100000; // 0.1 ms between each event
+        long nanosScale = 1000000;
+        long nanos = System.currentTimeMillis() * nanosScale - count * gap;
 
-        return IntStream.range(0, rangeMax).mapToObj(n -> {
-            Object[] payload = getRandomEventPayload(); // TODO randomize
-            return new SimpleEvent(payload, nanos + n * factor);
+        return LongStream.range(0, count).mapToObj(n -> {
+            Object[] payload = getRandomEventPayload();
+            return new SimpleEvent(payload, nanos + n * gap);
         }).collect(Collectors.toList());
     }
 
+    // TODO for better comparability, serialize the test data (using proto or java serialization or json) to disk and reuse
     CompletableFuture<Void> testInsertIntoReplicatedChronicleEngine(List<Event> events) throws IOException {
         return FutureUtil.wrapInCompletableFuture(() -> {
             for (Event e : events)
@@ -137,6 +191,8 @@ public class MeasureEventStorePerformanceService extends MeasurePerformanceServi
     public CompletableFuture<String> runInsertIntoEventStoreMeasurements(Integer count, Optional<Integer> batchSize) throws IOException, ExecutionException, InterruptedException {
         // takes ~ 0.15ms for 1000 events; 1.5ms for 10.000
         List<Event> events = getTestEvents(count);
+
+        LOG.info("TEST: Insert started at " + System.currentTimeMillis());
 
         int threadsPerBatch = batchSize.orElse(count);
         int batches = (int) Math.ceil(Float.valueOf(count) / threadsPerBatch);

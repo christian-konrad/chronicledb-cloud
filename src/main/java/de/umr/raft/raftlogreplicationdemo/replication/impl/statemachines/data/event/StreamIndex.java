@@ -14,17 +14,14 @@ import de.umr.event.Event;
 import de.umr.event.ex.EPRuntimeException;
 import de.umr.event.schema.Attribute;
 import de.umr.event.schema.EventSchema;
-import de.umr.event.schema.SchemaException;
 import de.umr.jepc.v2.api.epa.EPA;
+import org.apache.ratis.thirdparty.com.google.common.collect.Comparators;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -33,15 +30,15 @@ import java.util.function.Predicate;
  */
 public class StreamIndex implements EventStore {
 
-    private static final Logger log = LoggerFactory.getLogger(StreamIndex.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StreamIndex.class);
 
     public static StreamIndex loadStreamIndex(Path basePath, String streamName) throws IOException {
-        log.info("Loading stream index {}", streamName);
+        LOG.info("Loading stream index {}", streamName);
         return new StreamIndex(TABPlusEventStoreLoader.load(basePath, streamName));
     }
 
     public static StreamIndex createStreamIndex(Path basePath, String streamName, EventSchema schema) throws IOException {
-        log.info("Creating new stream index {}, schema: {}", streamName, schema);
+        LOG.info("Creating new stream index {}, schema: {}", streamName, schema);
         return new StreamIndex(TABPlusEventStoreLoader.create( basePath, streamName, getDefaultConfiguration(schema)));
     }
 
@@ -60,7 +57,21 @@ public class StreamIndex implements EventStore {
         }
     }
 
+    // TODO check if events are ordered.
+    // TODO if they are, check if raft logs (messages) are received in order.
     public void pushEvents(Iterator<Event> events, boolean ordered) {
+        // TODO check if events are ordered
+        // TODO remove check and iterator recreation later
+//        List<Event> eventsList = new ArrayList<>();
+//        events.forEachRemaining(eventsList::add);
+//
+//        boolean areEventsOrdered = Comparators.isInOrder(eventsList, Comparator.comparingLong(Event::getT1));
+//
+//        LOG.info("Events must be ordered: " + ordered);
+//        LOG.info("Events are ordered: " + areEventsOrdered);
+//
+//        assert ordered && areEventsOrdered : "Events aren't ordered";
+
         try {
             eventStore.insert(events, ordered);
         }
@@ -79,6 +90,8 @@ public class StreamIndex implements EventStore {
 
         List<SecondaryIndexConfigPojo> secondaryIndexes = new ArrayList<>();
         BufferConfigPojo bufferPojo = new BufferConfigPojo();
+
+        // TODO from properties
         ContainerConfigPojo secondaryIndexContainers = new ContainerConfigPojo(
                 ContainerConfigPojo.ContainerType.BLOCK_FILE, 8192, false, false
         );

@@ -44,6 +44,9 @@ package-lock.json
 # yarn error logs
 yarn-error.log
 
+# all logs
+logs
+
 # Bundled fonts
 *.woff
 *.woff2

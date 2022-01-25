@@ -77,7 +77,10 @@ public class EventSerializer {
             case DOUBLE:
                 return Double.BYTES;
             case STRING:
-                return event.get(attributeIndex, String.class).getBytes(DEFAULT_CHARSET).length
+                // TODO not efficient
+                String value = event.get(attributeIndex, String.class);
+                if (value == null) return 0;
+                return value.getBytes(DEFAULT_CHARSET).length
                         + Short.BYTES; // The length field (?)
             case GEOMETRY:
                 return new GeometrySerializer().getSerializedSize(event.get(attributeIndex, Geometry.class));

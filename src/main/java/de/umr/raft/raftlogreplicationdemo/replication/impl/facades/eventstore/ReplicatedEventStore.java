@@ -45,7 +45,7 @@ public class ReplicatedEventStore implements AggregatedEventStore {
     @Override
     public EventSchema getSchema() {
         // TODO implement via GetSchemaOperationMessage, but do not forget to cache
-        return new DemoEventSchemaProvider().getSchema("DEMO");
+        return new DemoEventSchemaProvider().getSchema("CEBS2022");
     }
 
     @Override

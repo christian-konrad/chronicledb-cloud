@@ -261,12 +261,44 @@ class EventStoreStream extends Component {
         return this.getAggregateBins(maxBins, this.state.aggregateGraphPeriod, this.state.aggregateGraphAttributeName, this.state.aggregateGraphAggregateType);
     }
 
-    _createMockEvent = () => ({
-        "someBool": !!Math.round(Math.random()),
-        "someInt": Math.round(Math.random() * 10),
-        "someString": "foo",
-        "TSTART": _millisAsNanos(Date.now())
-    });
+    get _securityTypes() {
+        return {
+            EQUITY: 0,
+            INDEX: 1,
+        }
+    }
+
+    get _tradeSymbols() {
+        return {
+            "TSLA": this._securityTypes.EQUITY,
+            "DAX": this._securityTypes.INDEX,
+            "MXWO": this._securityTypes.INDEX,
+            "NDX": this._securityTypes.INDEX,
+            "GOOG": this._securityTypes.EQUITY,
+            "MSFT": this._securityTypes.EQUITY,
+            "BNTX": this._securityTypes.EQUITY
+        };
+    }
+
+    _getRandomTradeSymbol() {
+        return Object.keys(this._tradeSymbols)[Math.round(Math.random() * 7)];
+    }
+
+    _createMockEvent = () => {
+        const symbol = this._getRandomTradeSymbol();
+        return {
+            // "someBool": !!Math.round(Math.random()),
+            // "someInt": Math.round(Math.random() * 10),
+            // "someString": "foo",
+
+            "symbol": symbol,
+            // Enum; Security type: 0 - [E]quity (e.g., Royal Dutch Shell, Siemens Healthineers) or 1 - [I]ndex (e.g., DAX)
+            "securityType": this._tradeSymbols[symbol],
+            // TODO get real data, do not use random
+            "lastTradePrice": Math.round((Math.random() + Number.EPSILON) * 100000) / 1000,
+            "TSTART": _millisAsNanos(Date.now())
+        };
+    }
 
     render() {
         if (this.state.streamInfo == null) return <Skeleton />
