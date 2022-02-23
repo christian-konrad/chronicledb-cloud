@@ -44,26 +44,12 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- logging -->
-<!--		<dependency>-->
-<!--			<groupId>ch.qos.logback</groupId>-->
-<!--			<artifactId>logback-core</artifactId>-->
-<!--			<version>1.2.6</version>-->
-<!--		</dependency>-->
-
-<!--		<dependency>-->
-<!--			<groupId>ch.qos.logback</groupId>-->
-<!--			<artifactId>logback-classic</artifactId>-->
-<!--			<version>1.2.6</version>-->
-<!--		</dependency>-->
-
-<!--		<dependency>-->
-<!--			<groupId>org.slf4j</groupId>-->
-<!--			<artifactId>slf4j-api</artifactId>-->
-<!--			<version>1.7.32</version>-->
-<!--			<scope>test</scope>-->
-<!--		</dependency>-->
-
+		<!-- Apache Commons to make life a little easier -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-collections4</artifactId>
+			<version>4.4</version>
+		</dependency>
 
 		<!-- need old version of codahale metrics as Ratis does not support v4, but spring includes it -->
 		<dependency>

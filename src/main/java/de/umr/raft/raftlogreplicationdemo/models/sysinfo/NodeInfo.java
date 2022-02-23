@@ -16,7 +16,6 @@ public class NodeInfo {
     @Getter @NonNull private final String host;
     @Getter private final String httpPort;
     @Getter @NonNull private final String metadataPort;
-    @Getter private final String replicationPort;
     @Getter private final String storagePath;
     @Getter private final String localHostAddress;
     @Getter private final String localHostName;
@@ -47,7 +46,6 @@ public class NodeInfo {
         val localHostAddress = replicatedMetaDataMap.get("localHostAddress");
         val httpPort = replicatedMetaDataMap.get("httpPort");
         val metadataPort = replicatedMetaDataMap.get("metadataPort");
-        val replicationPort = replicatedMetaDataMap.get("replicationPort");
         val storagePath = replicatedMetaDataMap.get("storagePath");
         val localHostName = replicatedMetaDataMap.get("localHostName");
         val remoteHostAddress = replicatedMetaDataMap.get("remoteHostAddress");
@@ -67,7 +65,6 @@ public class NodeInfo {
                 .host(localHostAddress)
                 .httpPort(httpPort)
                 .metadataPort(metadataPort)
-                .replicationPort(replicationPort)
                 .storagePath(storagePath)
                 .localHostAddress(localHostAddress)
                 .localHostName(localHostName)

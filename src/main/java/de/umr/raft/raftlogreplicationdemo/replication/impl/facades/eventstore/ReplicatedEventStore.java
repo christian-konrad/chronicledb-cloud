@@ -3,7 +3,6 @@ package de.umr.raft.raftlogreplicationdemo.replication.impl.facades.eventstore;
 import de.umr.chronicledb.common.query.cursor.Cursor;
 import de.umr.chronicledb.common.query.range.Range;
 import de.umr.chronicledb.event.store.AggregatedEventStore;
-import de.umr.chronicledb.event.store.EventStore;
 import de.umr.chronicledb.event.store.tabPlus.aggregation.EventAggregationValues;
 import de.umr.chronicledb.event.store.tabPlus.aggregation.impl.EventAggregate;
 import de.umr.chronicledb.event.store.tabPlus.aggregation.impl.global.EventCount;
@@ -17,9 +16,7 @@ import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.ev
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.FinalizedEventAggregationValues;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.serialization.AggregateRequestSerializer;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import lombok.val;
-import org.apache.ratis.statemachine.StateMachine;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,10 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -53,7 +47,7 @@ public class ReplicatedEventStore implements AggregatedEventStore {
         EventStoreOperationResultProto responseProto = null;
         try {
             responseProto = client.sendAndExecuteOperationMessage(
-                    EventStoreReplicationClient.createGetKeyRangeEventOperationMessage(),
+                    EventStoreReplicationClient.createGetKeyRangeOperationMessage(),
                     EventStoreOperationResultProto.parser());
         } catch (Exception e) { // catch everything here to prevent sneaky throws from eating runtime errors
             LOG.error("Could not get key range", e);
@@ -94,7 +88,7 @@ public class ReplicatedEventStore implements AggregatedEventStore {
         EventStoreOperationResultProto responseProto = null;
         try {
         responseProto = client.sendAndExecuteOperationMessage(
-                EventStoreReplicationClient.createGetAggregatesEventOperationMessage(range, list),
+                EventStoreReplicationClient.createGetAggregatesOperationMessage(range, list),
                 EventStoreOperationResultProto.parser());
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
@@ -148,8 +142,6 @@ public class ReplicatedEventStore implements AggregatedEventStore {
     public void insert(Iterator<Event> events, boolean ordered) throws IllegalStateException, IOException {
         // TODO must always obtain schema first; then cache schema
 
-        // TODO measure time
-
         Instant start = Instant.now();
 
         EventStoreOperationResultProto responseProto = null;
@@ -169,7 +161,7 @@ public class ReplicatedEventStore implements AggregatedEventStore {
 
         Instant finish = Instant.now();
         long timeElapsed = Duration.between(start, finish).toMillis();
-        LOG.info("Pushing events in bulk took " + timeElapsed + "ms");
+        LOG.debug("Pushing events in bulk took " + timeElapsed + "ms");
     }
 
     @Override
@@ -191,5 +183,22 @@ public class ReplicatedEventStore implements AggregatedEventStore {
 
     public static ReplicatedEventStore of(String streamName, EventStoreReplicationClient client) {
         return new ReplicatedEventStore(streamName, client);
+    }
+
+    protected void clear() throws IOException {
+        EventStoreOperationResultProto responseProto = null;
+        try {
+            responseProto = client.sendAndExecuteOperationMessage(
+                    EventStoreReplicationClient.createClearEventsOperationMessage(),
+                    EventStoreOperationResultProto.parser());
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            throw new UnsupportedOperationException("Could not clear events");
+        }
+
+        if (!responseProto.getStatus().equals(OperationResultStatus.OK)) {
+            // TODO throw more meaningful exception
+            throw new UnsupportedOperationException();
+        }
     }
 }

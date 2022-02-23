@@ -6,6 +6,8 @@ import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.eventstore.EventStoreOperationMessage;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.EventStoreState;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.StreamIndex;
+import org.apache.ratis.proto.RaftProtos;
+import org.apache.ratis.statemachine.TransactionContext;
 import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 
@@ -81,6 +83,15 @@ public class EventStoreStateMachine extends ExecutableMessageStateMachine<EventS
     @Override
     protected EventStoreOperationMessage createExecutableMessageOf(ByteString byteString) throws InvalidProtocolBufferException {
         return EventStoreOperationMessage.of(byteString);
+    }
+
+    @Override
+    public void beforeApplyTransaction(TransactionContext trx) {
+        super.beforeApplyTransaction(trx);
+        if (LOG.isDebugEnabled()) {
+            final RaftProtos.LogEntryProto entry = trx.getLogEntry();
+            LOG.debug("Executing message " + entry.getTerm() + ":" + entry.getIndex());
+        }
     }
 
     // TODO transport events by protobuf

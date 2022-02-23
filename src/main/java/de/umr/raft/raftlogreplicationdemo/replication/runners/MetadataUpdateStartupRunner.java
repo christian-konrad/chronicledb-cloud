@@ -50,7 +50,6 @@ public class MetadataUpdateStartupRunner implements ApplicationRunner {
         replicatedMetaDataMap.put("nodeId", raftConfig.getCurrentPeerId());
         replicatedMetaDataMap.put("storagePath", raftConfig.getStoragePath());
         replicatedMetaDataMap.put("metadataPort", String.valueOf(currentPeerPort));
-        replicatedMetaDataMap.put("replicationPort", String.valueOf(raftConfig.getReplicationPort()));
 
         replicatedMetaDataMap.put("httpPort", raftConfig.getHttpPort());
         replicatedMetaDataMap.put("localHostAddress", InetAddress.getLocalHost().getHostAddress());

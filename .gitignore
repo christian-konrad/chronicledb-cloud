@@ -46,6 +46,7 @@ yarn-error.log
 
 # all logs
 logs
+logs/*
 
 # Bundled fonts
 *.woff

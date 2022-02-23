@@ -12,6 +12,7 @@ enum EventStoreOperationType {
     QUERY = 2;
     AGGREGATE = 3;
     GET_KEY_RANGE = 4;
+    CLEAR = 5; // clears the whole stream
 }
 
 message EventStoreOperationProto {

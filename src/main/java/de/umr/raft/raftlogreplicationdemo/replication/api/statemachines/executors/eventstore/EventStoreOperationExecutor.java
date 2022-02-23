@@ -4,6 +4,7 @@ import de.umr.raft.raftlogreplicationdemo.replication.api.proto.*;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.NullOperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.OperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.EventStoreState;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.EventStoreClearOperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.EventStoreGetAggregatesOperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.EventStoreGetKeyRangeOperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.EventStorePushEventOperationExecutor;
@@ -22,6 +23,8 @@ public interface EventStoreOperationExecutor<ResultType extends Message> extends
                 return EventStoreGetAggregatesOperationExecutor.of(eventStoreOperation);
             case GET_KEY_RANGE:
                 return EventStoreGetKeyRangeOperationExecutor.of(eventStoreOperation);
+            case CLEAR:
+                return EventStoreClearOperationExecutor.of(eventStoreOperation);
             case NULL:
             case UNRECOGNIZED:
             default:

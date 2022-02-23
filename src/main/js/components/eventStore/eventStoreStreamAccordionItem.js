@@ -13,6 +13,7 @@ import ErrorBoundary from "../error/errorBoundary";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import InfoListItem from "../common/list/infoListItem";
 import LinkListItem from "../common/list/linkListItem";
+import EventStoreApiClient from "../../api/eventStore/eventStoreApiClient";
 
 const useStyles = theme => ({
     accordionDetails: {
@@ -30,13 +31,14 @@ class EventStoreStreamAccordionItem extends Component {
 
     constructor(props) {
         super(props);
+        this.apiClient = new EventStoreApiClient(props);
         this.eventStreamName = props.eventStreamName;
         this.state = { streamInfo: null };
         this.updateStreamInfo = this.updateStreamInfo.bind(this);
     }
 
     updateStreamInfo() {
-        ApiClient.fetchEventStreamInfo(this.eventStreamName)
+        this.apiClient.fetchEventStreamInfo(this.eventStreamName)
             .then(streamInfo => this.setState({ streamInfo }))
             .catch(error => this.setState({ streamInfo: null }));
     }
@@ -48,7 +50,7 @@ class EventStoreStreamAccordionItem extends Component {
     render() {
         if (this.state.streamInfo == null) return <Skeleton />
 
-        const { classes } = this.props;
+        const { classes, type } = this.props;
         const streamInfo = this.state.streamInfo;
 
         const { schema, eventCount, timeInterval } = streamInfo;
@@ -72,7 +74,7 @@ class EventStoreStreamAccordionItem extends Component {
                                 <InfoListItem classes={classes} label="Event count" content={eventCount} />
                                 <InfoListItem classes={classes} label="Time interval" content={formattedTimeInterval} />
                                 <InfoListItem classes={classes} label="Attributes in schema" content={schema.length} />
-                                <LinkListItem classes={classes} label="Details" content="" to={`/admin/replicated-event-store/streams/${this.eventStreamName}`} />
+                                <LinkListItem classes={classes} label="Details" content="" to={`/admin/${type}-event-store/streams/${this.eventStreamName}`} />
                             </List>
                         </div>
                     </ErrorBoundary>

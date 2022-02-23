@@ -29,11 +29,33 @@ public class SystemInfoController {
         return systemInfoService.getAllMetaData();
     }
 
+    /**
+     * Returns division info on a raft group, which represents the current
+     * state of the group and its nodes of the time of response to the request.
+     * This includes the roles of the nodes (LEADER, FOLLOWER, CANDIDATE)
+     * and their last applied term and index.
+     * @param id The id of the raft group
+     * @return The division info, containing the state of the nodes.
+     * @throws IOException
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
     @GetMapping("raft-groups/{id}/divisions")
     public Map<String, DivisionInfo> getGroupDivisions(@PathVariable String id) throws IOException, ExecutionException, InterruptedException {
         return systemInfoService.getRaftGroupDivisions(id);
     }
 
+    /**
+     * Returns general info of the raft group for the given id.
+     * Does not include current state info (division info) which
+     * can be requested via `/divisions`.
+     * @param id The id of the raft group
+     * @return The raft group info, including the associated nodes and names
+     * of the state machine, group instance etc.
+     * @throws IOException
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
     @GetMapping("raft-groups/{id}")
     public RaftGroupInfo getRaftGroupInfo(@PathVariable String id) throws IOException, ExecutionException, InterruptedException {
         return systemInfoService.getRaftGroupInfo(id);

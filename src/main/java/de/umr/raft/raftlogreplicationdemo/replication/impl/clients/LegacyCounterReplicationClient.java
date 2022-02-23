@@ -44,7 +44,7 @@ public class LegacyCounterReplicationClient extends RaftReplicationClient<Counte
 //        String host = raftConfig.getHostAddress();
 //
 //        // TODO get peers from metadata client
-//        val peer = RaftPeer.newBuilder().setId(raftConfig.getCurrentPeerId()).setAddress(host + ":" + raftConfig.getReplicationPort()).build();
+//        val peer = RaftPeer.newBuilder().setId(raftConfig.getCurrentPeerId()).setAddress(host + ":" + raftConfig.getMetadataPort()).build();
 //
 //        RaftGroupId raftGroupId = RaftGroupId.valueOf(raftGroupUUID);
 //        return RaftGroup.valueOf(raftGroupId, peer);

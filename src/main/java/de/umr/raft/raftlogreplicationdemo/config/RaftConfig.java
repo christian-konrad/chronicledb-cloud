@@ -65,14 +65,11 @@ public class RaftConfig {
     @Value("${eventstore.buffer.timeout}")
     @Getter private int eventStoreBufferTimeout;
 
-    // TODO should somehow obfuscate or combine metadata and actual raft port
+    // TODO actually, THIS is replication-port. Need also seperate, explicit port for management group
     @Value("${metadata-port}")
     @Getter private String metadataPort;
-    // or name managementPort and replicationPort ? What if db adapter port will be added? How to handle 4 ports??
+    // or name managementPort and replicationPort ?
     // TODO need some kind of port proxy
-
-    @Value("${replication-port}")
-    @Getter private String replicationPort;
 
     private String[] getPeerIdAndAddress(String peerDefinition) {
         // format can be <PEER_ID>:<HOST>:<PORT> or <HOST>:<PORT> where HOST == PEER_ID

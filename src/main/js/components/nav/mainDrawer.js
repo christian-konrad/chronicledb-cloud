@@ -93,6 +93,18 @@ export default function MainDrawer() {
                         to="/admin/replicated-event-store"
                         icon={<MessageQueue20 />} />
                 </List>
+                <List
+                    subheader={
+                        <ListSubheader component="div">
+                            Embedded
+                        </ListSubheader>
+                    }>
+                    <DrawerListItem
+                        id="replicated-event-store"
+                        text="ChronicleDB Event Store"
+                        to="/admin/embedded-event-store"
+                        icon={<MessageQueue20 />} />
+                </List>
             </div>
         </Drawer>
     );

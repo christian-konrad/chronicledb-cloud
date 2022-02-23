@@ -13,11 +13,14 @@ import RaftGroupsPage from "./pages/raftGroups";
 import RaftGroupDetailPage from "./pages/raftGroupDetails";
 import NodeInfoPage from "./pages/nodeInfo";
 import ReplicatedCounterPage from "./pages/replicatedCounter";
-import ReplicatedEventStorePage from "./pages/replicatedEventStore";
-import EventStoreStreamPage from "./pages/eventStoreStream";
+import ReplicatedEventStorePage from "./pages/eventStore/replicatedEventStore";
+import ReplicatedEventStoreStreamPage from "./pages/eventStore/replicatedEventStoreStream";
+import EmbeddedEventStorePage from "./pages/eventStore/embeddedEventStore";
+import EmbeddedEventStoreStreamPage from "./pages/eventStore/embeddedEventStoreStream";
 import HealthCheckNotifier from "./components/healthCheckNotifier";
 import ErrorBoundary from "./components/error/errorBoundary";
 import MetaDataPage from "./pages/metaData";
+
 // import ReplicatedKeyValueStorePage from "./pages/replicatedKeyValueStore";
 // import ReplicatedAppendOnlyLogPage from "./pages/replicatedAppendOnlyLog";
 
@@ -141,7 +144,9 @@ class App extends React.Component {
                             <Route path='/admin/replicated-counter' exact={true} component={ReplicatedCounterPage}/>
                             {/*<Route path='/admin/replicated-kv-store' exact={true} component={ReplicatedKeyValueStorePage}/>*/}
                             <Route path='/admin/replicated-event-store' exact={true} component={ReplicatedEventStorePage}/>
-                            <Route path='/admin/replicated-event-store/streams/:eventStreamName' component={EventStoreStreamPage}/>
+                            <Route path='/admin/replicated-event-store/streams/:eventStreamName' component={ReplicatedEventStoreStreamPage}/>
+                            <Route path='/admin/embedded-event-store' exact={true} component={EmbeddedEventStorePage}/>
+                            <Route path='/admin/embedded-event-store/streams/:eventStreamName' component={EmbeddedEventStoreStreamPage}/>
                         </Switch>
                     </Router>
                     <ErrorBoundary>

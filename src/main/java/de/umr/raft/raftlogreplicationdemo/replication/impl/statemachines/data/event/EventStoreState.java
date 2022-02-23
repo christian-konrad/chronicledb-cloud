@@ -112,6 +112,14 @@ public class EventStoreState implements StateMachineState {
         */
     }
 
+    /**
+     * ⚠ Handle with care!
+     * @throws IOException
+     */
+    public void clearStream() throws IOException {
+        initStreamWithSchema();
+    }
+
     public void initState(Path basePath, String streamName) throws IOException {
         final String normalizedName = streamName.toUpperCase();
         this.streamIdentifier = StreamIdentifier.of(basePath, normalizedName);

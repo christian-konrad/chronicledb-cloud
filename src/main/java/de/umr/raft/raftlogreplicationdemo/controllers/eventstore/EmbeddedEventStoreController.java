@@ -1,0 +1,133 @@
+package de.umr.raft.raftlogreplicationdemo.controllers.eventstore;
+
+import de.umr.chronicledb.common.query.range.Range;
+import de.umr.chronicledb.event.store.tabPlus.aggregation.impl.EventAggregate;
+import de.umr.event.Event;
+import de.umr.event.schema.SchemaException;
+import de.umr.raft.raftlogreplicationdemo.models.eventstore.*;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.eventstore.EmbeddedChronicleEngine;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.eventstore.ReplicatedChronicleEngine;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.StreamInfo;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.serialization.AggregateRequestSerializer;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+
+/**
+ * Controller for the embedded event store
+ * which is not replicated.
+ * ⚠ To be used for evaluation and benchmarking purposes only!
+ */
+@RestController
+@RequestMapping("/api/event-store/embedded")
+public class EmbeddedEventStoreController {
+
+    @Autowired
+    EmbeddedChronicleEngine chronicleEngine; // TODO better also wrap engine in service
+
+    @GetMapping("/streams")
+    public List<String> getStreams() throws IOException, ExecutionException, InterruptedException {
+        return chronicleEngine.getStreamNames();
+    }
+
+    @GetMapping(value = "/streams/{streamName}/info")
+    public StreamInfo getStreamInfo(@PathVariable String streamName) throws IOException {
+        return chronicleEngine.getStreamInfo(streamName);
+    }
+
+    // TODO matrix param
+    @GetMapping(value = {
+            "/streams/{streamName}/aggregates/{aggregateType}",
+            "/streams/{streamName}/aggregates/{aggregateType}/{attributeName}"
+    })
+    public Object getAggregate(@PathVariable String streamName,
+                                   @PathVariable String aggregateType,
+                                   @PathVariable Optional<String> attributeName,
+                                   @RequestParam Optional<Long> rangeStart, @RequestParam Optional<Long> rangeEnd,
+                                   @RequestParam Optional<Boolean> lowerInclusive, @RequestParam Optional<Boolean> upperInclusive) throws IOException, ResponseStatusException, UnsupportedOperationException {
+
+        if (rangeStart.isPresent() ^ rangeEnd.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Both start and end of the range must be specified");
+        }
+
+        EventAggregate aggregate;
+        try {
+            aggregate = AggregateRequestSerializer.createAggregate(attributeName, aggregateType);
+
+        }  catch (UnsupportedOperationException | IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+
+        boolean isRangeSpecified = rangeStart.isPresent() && rangeEnd.isPresent();
+
+        if (isRangeSpecified) {
+            Range<Long> range = new Range<>(rangeStart.get(), rangeEnd.get(), lowerInclusive.orElse(true), upperInclusive.orElse(true));
+            return chronicleEngine.getAggregate(streamName, range, aggregate).orElse(null);
+        } else {
+            return chronicleEngine.getAggregate(streamName, aggregate).orElse(null);
+        }
+    }
+
+    @PostMapping(value = "/streams/{streamName}/events")
+    @ResponseStatus(HttpStatus.OK)
+    public void insertEvents(@PathVariable String streamName, @RequestBody InsertEventIntoEmbeddedStoreRequest input) throws IOException, InterruptedException {
+        for (Event e : input.getEvents())
+            chronicleEngine.pushEvent(streamName, e);
+    }
+
+    @DeleteMapping(value = "/streams/{streamName}/events")
+    @ResponseStatus(HttpStatus.OK)
+    public ClearStreamRequest requestClearStream(@PathVariable String streamName) throws IOException, InterruptedException {
+        // return ClearStreamRequest with token. When token is confirmed using confirmClearStreamRequest,
+        // the stream is cleared. The token expires after 5 minutes
+
+        try {
+            return chronicleEngine.createClearStreamRequest(streamName);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Stream not found", e);
+        }
+    }
+
+    @PostMapping(value = "/clear-request-confirmation")
+    @ResponseStatus(HttpStatus.OK)
+    public void confirmClearStreamRequest(@RequestBody ClearStreamRequest clearStreamRequest) throws IOException, InterruptedException {
+        boolean success = chronicleEngine.confirmClearStreamRequest(clearStreamRequest);
+        if (!success) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "No valid clear request provided");
+        }
+    }
+
+    @PostMapping(value = "/streams")
+    @ResponseStatus(HttpStatus.OK)
+    public void createStream(@RequestBody CreateStreamRequest createRequest) throws SchemaException, IOException {
+        chronicleEngine.registerStream(createRequest.getStreamName(), createRequest.getSchema());
+    }
+
+    // TODO build query stuff
+    /*
+    @GetMapping(value = "/schema")
+    public EventSchema schema(@RequestBody SchemaRequest schemaQuery) throws ParseException {
+        log.info("Received schema request:  {}.", schemaQuery);
+        EPA translate = chronicleEngine.translateQuery(schemaQuery.getQueryString());
+        return chronicleEngine.computeSchema(translate);
+    }
+    */
+
+    @RequestMapping(value = "/query", method = RequestMethod.POST)
+    public QueryResponse query(@RequestBody QueryRequest query)
+            throws ParseException, InterruptedException, ExecutionException {
+        //LOG.info("Received query request: {}", query);
+
+        return chronicleEngine.runQueryRequest(query);
+    }
+
+}

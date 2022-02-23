@@ -26,12 +26,16 @@ public class EventStoreReplicationClient extends PartitionedRaftReplicationClien
         return EventStoreOperationMessage.Factory.createPushBulkEventsOperationMessage(events, ordered, eventSchema);
     }
 
-    public static EventStoreOperationMessage createGetAggregatesEventOperationMessage(Range<Long> range, List<? extends EventAggregate> list) {
-        return EventStoreOperationMessage.Factory.createGetAggregatesEventOperationMessage(range, list);
+    public static EventStoreOperationMessage createGetAggregatesOperationMessage(Range<Long> range, List<? extends EventAggregate> list) {
+        return EventStoreOperationMessage.Factory.createGetAggregatesOperationMessage(range, list);
     }
 
-    public static EventStoreOperationMessage createGetKeyRangeEventOperationMessage() {
+    public static EventStoreOperationMessage createGetKeyRangeOperationMessage() {
         return EventStoreOperationMessage.Factory.createGetKeyRangeEventOperationMessage();
+    }
+
+    public static EventStoreOperationMessage createClearEventsOperationMessage() {
+        return EventStoreOperationMessage.Factory.createClearEventsOperationMessage();
     }
 
     /*

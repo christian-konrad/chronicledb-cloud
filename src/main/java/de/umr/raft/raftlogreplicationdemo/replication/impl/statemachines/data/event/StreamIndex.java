@@ -15,7 +15,6 @@ import de.umr.event.ex.EPRuntimeException;
 import de.umr.event.schema.Attribute;
 import de.umr.event.schema.EventSchema;
 import de.umr.jepc.v2.api.epa.EPA;
-import org.apache.ratis.thirdparty.com.google.common.collect.Comparators;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +27,7 @@ import java.util.function.Predicate;
  * Simple EventStore implementation.
  * Stolen from ChronicleDB Lambda Engine
  */
-public class StreamIndex implements EventStore {
+public class StreamIndex implements AggregatedEventStore {
 
     private static final Logger LOG = LoggerFactory.getLogger(StreamIndex.class);
 
@@ -57,21 +56,7 @@ public class StreamIndex implements EventStore {
         }
     }
 
-    // TODO check if events are ordered.
-    // TODO if they are, check if raft logs (messages) are received in order.
     public void pushEvents(Iterator<Event> events, boolean ordered) {
-        // TODO check if events are ordered
-        // TODO remove check and iterator recreation later
-//        List<Event> eventsList = new ArrayList<>();
-//        events.forEachRemaining(eventsList::add);
-//
-//        boolean areEventsOrdered = Comparators.isInOrder(eventsList, Comparator.comparingLong(Event::getT1));
-//
-//        LOG.info("Events must be ordered: " + ordered);
-//        LOG.info("Events are ordered: " + areEventsOrdered);
-//
-//        assert ordered && areEventsOrdered : "Events aren't ordered";
-
         try {
             eventStore.insert(events, ordered);
         }
@@ -169,34 +154,42 @@ public class StreamIndex implements EventStore {
         return eventStore.filter(keyRange, predicate);
     }
 
+    @Override
     public Cursor<Event> filter(Predicate<Event> predicate, Predicate<EventAggregationValues> smaPredicate) throws IllegalStateException, IOException {
         return eventStore.filter(predicate, smaPredicate);
     }
 
+    @Override
     public Cursor<Event> filter(Range<Long> range, Predicate<Event> predicate, Predicate<EventAggregationValues> predicate1) throws IllegalStateException, IOException {
         return eventStore.filter(range, predicate, predicate1);
     }
 
+    @Override
     public Optional<?> getAggregate(EventAggregate aggregate) throws IllegalStateException, IOException {
         return eventStore.getAggregate(aggregate);
     }
 
+    @Override
     public Optional<?> getAggregate(Range<Long> keyRange, EventAggregate aggregate) throws IllegalStateException, IOException {
         return eventStore.getAggregate(keyRange, aggregate);
     }
 
+    @Override
     public <T> Optional<T> getAggregate(EventAggregate aggregate, Class<T> type) throws IOException {
         return eventStore.getAggregate(aggregate, type);
     }
 
+    @Override
     public <T> Optional<T> getAggregate(EventAggregate aggregate, Range<Long> keyRange, Class<T> type) throws IOException {
         return eventStore.getAggregate(aggregate, keyRange, type);
     }
 
+    @Override
     public EventAggregationValues getAggregates(List<? extends EventAggregate> aggregates) throws IllegalStateException, IOException {
         return eventStore.getAggregates(aggregates);
     }
 
+    @Override
     public EventAggregationValues getAggregates(Range<Long> range, List<? extends EventAggregate> list) throws IllegalStateException, IOException, EPRuntimeException {
         return eventStore.getAggregates(range, list);
     }

@@ -41,6 +41,7 @@ public class EventStoreOperationMessage implements ExecutableMessage<EventStoreS
     public boolean isTransactionMessage() {
         switch (eventStoreOperation.getOperationType()) {
             case PUSH_EVENTS:
+            case CLEAR:
                 return true;
         }
         return false;
@@ -93,7 +94,7 @@ public class EventStoreOperationMessage implements ExecutableMessage<EventStoreS
             return EventStoreOperationMessage.of(eventStoreOperation);
         }
 
-        public static EventStoreOperationMessage createGetAggregatesEventOperationMessage(Range<Long> range, List<? extends EventAggregate> list) {
+        public static EventStoreOperationMessage createGetAggregatesOperationMessage(Range<Long> range, List<? extends EventAggregate> list) {
             val aggregateRequestProto = AggregateRequestSerializer.toProto(range, list);
 
             val eventStoreOperation = EventStoreOperationProto.newBuilder()
@@ -107,6 +108,14 @@ public class EventStoreOperationMessage implements ExecutableMessage<EventStoreS
         public static EventStoreOperationMessage createGetKeyRangeEventOperationMessage() {
             val eventStoreOperation = EventStoreOperationProto.newBuilder()
                     .setOperationType(EventStoreOperationType.GET_KEY_RANGE)
+                    .build();
+
+            return EventStoreOperationMessage.of(eventStoreOperation);
+        }
+
+        public static EventStoreOperationMessage createClearEventsOperationMessage() {
+            val eventStoreOperation = EventStoreOperationProto.newBuilder()
+                    .setOperationType(EventStoreOperationType.CLEAR)
                     .build();
 
             return EventStoreOperationMessage.of(eventStoreOperation);

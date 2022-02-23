@@ -44,7 +44,7 @@ public class RaftSystemInfoClient {
     private RaftClient buildAppLogicRaftClient() {
         RaftGroupId raftGroupId = RaftGroupId.valueOf(getRaftGroupUUID());
         String host = raftConfig.getHostAddress();
-        val peer = RaftPeer.newBuilder().setId(raftConfig.getCurrentPeerId()).setAddress(host + ":" + raftConfig.getReplicationPort()).build();
+        val peer = RaftPeer.newBuilder().setId(raftConfig.getCurrentPeerId()).setAddress(host + ":" + raftConfig.getMetadataPort()).build();
         RaftGroup raftGroup =  RaftGroup.valueOf(raftGroupId, peer);
 
         RaftProperties raftProperties = new RaftProperties();

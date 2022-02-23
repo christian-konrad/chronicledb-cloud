@@ -82,7 +82,7 @@ class NodeInfo extends Component {
         if (!this.state.nodeInfo) return <Skeleton />
 
         const { classes } = this.props;
-        const { id, host, httpPort, metadataPort, replicationPort, storagePath,
+        const { id, host, httpPort, metadataPort, storagePath,
             localHostAddress, localHostName, remoteHostAddress, remoteHostName,
             osName, osVersion,
             javaVersion, jdkVersion, springVersion,
@@ -93,7 +93,6 @@ class NodeInfo extends Component {
         // TODO should use https
         const httpAdminAddress = `http://${remoteHostName}:${httpPort}/admin`;
         const metadataAddress = `${host}:${metadataPort}`;
-        const replicationAddress = `${host}:${replicationPort}`;
 
         const formatBytes = (bytes, decimals = 2) => {
             if (bytes === 0) return '0 Bytes';
@@ -145,8 +144,7 @@ class NodeInfo extends Component {
                     } />
                     <InfoListItem classes={classes} label="Last heartbeat before" content={formattedHeartbeatBefore} />
                     <InfoListItem classes={classes} label="HTTP address" content={httpAddress} />
-                    <InfoListItem classes={classes} label="Metadata RPC address" content={metadataAddress} />
-                    <InfoListItem classes={classes} label="Replication RPC address" content={replicationAddress} />
+                    <InfoListItem classes={classes} label="Replication RPC address" content={metadataAddress} />
                     <InfoListItem classes={classes} label="Management web console" content={<a href={httpAdminAddress}>{httpAdminAddress}</a>} />
                     <InfoListItem classes={classes} label="Storage path" content={storagePath} />
                     <InfoListItem classes={classes} label="Local host address" content={localHostAddress} />

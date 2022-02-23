@@ -9,8 +9,12 @@ import de.umr.event.Event;
 import de.umr.event.schema.EventSchema;
 import de.umr.raft.raftlogreplicationdemo.json.deserialization.event.EventDeserializer;
 import de.umr.raft.raftlogreplicationdemo.models.eventstore.InsertEventRequest;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.eventstore.BaseChronicleEngine;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.eventstore.EmbeddedChronicleEngine;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.eventstore.ReplicatedChronicleEngine;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.eventstore.ReplicatedEventStore;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.web.servlet.HandlerMapping;
 
@@ -36,6 +40,7 @@ public class InsertEventRequestDeserializer extends JsonDeserializer<InsertEvent
 	 */
 	@Autowired
 	public InsertEventRequestDeserializer(ReplicatedChronicleEngine engine, HttpServletRequest request) {
+		// TODO different engines, depending on mapping
 		this.engine = engine;
 		this.request = request;
 	}
@@ -50,6 +55,7 @@ public class InsertEventRequestDeserializer extends JsonDeserializer<InsertEvent
 
 		// inject the path param
 		Map map = (Map) request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+
 		String streamName = (String) map.get("streamName");
 
 		final EventSchema schema = engine.getSchema(streamName);

@@ -14,6 +14,7 @@ import ReactJson from 'react-json-view';
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import {Add20} from "@carbon/icons-react";
 import Plot from 'react-plotly.js';
+import EventStoreApiClient from "../../api/eventStore/eventStoreApiClient";
 
 const useStyles = theme => ({
     accordionDetails: {
@@ -154,6 +155,7 @@ class EventStoreStream extends Component {
     constructor(props) {
         super(props);
         this.eventStreamName = props.eventStreamName;
+        this.apiClient = new EventStoreApiClient(props);
         this.state = {
             streamInfo: null,
             bins: [],
@@ -170,7 +172,7 @@ class EventStoreStream extends Component {
     }
 
     updateStreamInfo() {
-        ApiClient.fetchEventStreamInfo(this.eventStreamName)
+        this.apiClient.fetchEventStreamInfo(this.eventStreamName)
             .then(streamInfo => this.setState({ streamInfo }))
             .catch(error => this.setState({ streamInfo: null }));
     }
@@ -205,7 +207,7 @@ class EventStoreStream extends Component {
 
     // TODO remove mock event
     pushEvent(event) {
-        ApiClient.pushEvent(this.eventStreamName, event)
+        this.apiClient.pushEvent(this.eventStreamName, event)
             .then(() => this.updateStreamInfo());
     }
 
@@ -244,7 +246,7 @@ class EventStoreStream extends Component {
         const bins = await Promise.all([...Array(maxBins).keys()].map(async (offset) => {
             const lower = periodLower + offset * binDuration;
             const upper = Math.min(periodLower + (offset + 1) * binDuration, nowNanos);
-            let aggregatedCount = await ApiClient.getAggregate({
+            let aggregatedCount = await this.apiClient.getAggregate({
                 streamName: this.eventStreamName,
                 aggregateType,
                 attributeName,

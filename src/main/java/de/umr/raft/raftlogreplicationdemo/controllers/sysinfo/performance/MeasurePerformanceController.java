@@ -1,5 +1,6 @@
 package de.umr.raft.raftlogreplicationdemo.controllers.sysinfo.performance;
 
+import de.umr.raft.raftlogreplicationdemo.models.sysinfo.performance.MeasurementResultResponse;
 import de.umr.raft.raftlogreplicationdemo.services.impl.sysinfo.performance.MeasureCounterPerformanceService;
 import de.umr.raft.raftlogreplicationdemo.services.impl.sysinfo.performance.MeasureEventStorePerformanceService;
 import de.umr.raft.raftlogreplicationdemo.services.impl.sysinfo.performance.MeasureMetadataPerformanceService;
@@ -21,8 +22,14 @@ public class MeasurePerformanceController {
     // TODO remove crossOrigin later
     @CrossOrigin
     @GetMapping("/measure/event-store/insert-events/{count}")
-    public String runInsertIntoEventStoreMeasurements(@PathVariable Integer count, @RequestParam Optional<Integer> batchSize) throws IOException, ExecutionException, InterruptedException {
+    public MeasurementResultResponse runInsertIntoEventStoreMeasurements(@PathVariable Integer count, @RequestParam Optional<Integer> batchSize) throws IOException, ExecutionException, InterruptedException {
         return measureEventStorePerformanceService.runInsertIntoEventStoreMeasurements(count, batchSize).get();
+    }
+
+    @CrossOrigin
+    @GetMapping("/measure/event-store/embedded/insert-events/{count}")
+    public MeasurementResultResponse runInsertIntoEmbeddedEventStoreMeasurements(@PathVariable Integer count, @RequestParam Optional<Integer> batchSize) throws IOException, ExecutionException, InterruptedException {
+        return measureEventStorePerformanceService.runInsertIntoEmbeddedEventStoreMeasurements(count, batchSize).get();
     }
 
     @GetMapping("/measure/event-store/insert-events/emitter/start")
