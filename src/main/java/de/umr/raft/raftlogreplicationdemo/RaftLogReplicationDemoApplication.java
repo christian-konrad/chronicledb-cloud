@@ -7,7 +7,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class RaftLogReplicationDemoApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(RaftLogReplicationDemoApplication.class, args);
+//		try {
+			SpringApplication.run(RaftLogReplicationDemoApplication.class, args);
+//		} catch (Throwable e) {
+//			e.printStackTrace();
+//		}
 	}
 
 }

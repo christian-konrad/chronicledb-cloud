@@ -25,7 +25,7 @@ import java.util.concurrent.ExecutionException;
 
 import static java.lang.System.currentTimeMillis;
 
-@Component
+//@Component
 @RequiredArgsConstructor(staticName = "of")
 public class ClusterHeartbeatRunner implements ApplicationRunner {
 
@@ -68,53 +68,48 @@ public class ClusterHeartbeatRunner implements ApplicationRunner {
 
             while (true) {
                 try {
-                    //Instant start = Instant.now();
+                    try {
+                        // also obtain and put current division infos
+                        if (clusterManagementMultiRaftServer.isRunning()) {
+                            peerMetaData.putAsync("heartbeat", String.valueOf(currentTimeMillis()));
+                            try {
+                                // division is the role this node has in the given group
+                                List<RaftServer.Division> divisions = clusterManagementMultiRaftServer.getAllDivisions();
+                                for (RaftServer.Division division : divisions) {
+                                    val divisionMetaData = ReplicatedMetadataMap.ofDivision(division.getMemberId().toString(), client);
+                                    val currentTerm = division.getInfo().getCurrentTerm();
+                                    val lastAppliedIndex = division.getInfo().getLastAppliedIndex();
+                                    val role = division.getInfo().getCurrentRole();
+                                    val isAlive = division.getInfo().isAlive();
 
-                    // TODO also obtain and put current division infos
-                    if (clusterManagementMultiRaftServer.isRunning()) {
-                        peerMetaData.putAsync("heartbeat", String.valueOf(currentTimeMillis()));
-                        try {
-                            // division is the role this node has in the given group
-                            List<RaftServer.Division> divisions = clusterManagementMultiRaftServer.getAllDivisions();
-                            for (RaftServer.Division division : divisions) {
-                                val divisionMetaData = ReplicatedMetadataMap.ofDivision(division.getMemberId().toString(), client);
-                                val currentTerm = division.getInfo().getCurrentTerm();
-                                val lastAppliedIndex = division.getInfo().getLastAppliedIndex();
-                                val role = division.getInfo().getCurrentRole();
-                                val isAlive = division.getInfo().isAlive();
+                                    // val serverMetrics = division.getRaftServerMetrics();
+                                    // val logMetrics = division.getRaftLog().getRaftLogMetrics().toString();
 
-                                // val serverMetrics = division.getRaftServerMetrics();
-                                // val logMetrics = division.getRaftLog().getRaftLogMetrics().toString();
+                                    divisionMetaData.putAsync("currentTerm", String.valueOf(currentTerm));
+                                    divisionMetaData.putAsync("lastAppliedIndex", String.valueOf(lastAppliedIndex));
+                                    divisionMetaData.putAsync("role", role.name());
+                                    divisionMetaData.putAsync("isAlive", String.valueOf(isAlive));
 
-                                divisionMetaData.putAsync("currentTerm", String.valueOf(currentTerm));
-                                divisionMetaData.putAsync("lastAppliedIndex", String.valueOf(lastAppliedIndex));
-                                divisionMetaData.putAsync("role", role.name());
-                                divisionMetaData.putAsync("isAlive", String.valueOf(isAlive));
-
-                                // divisionMetaData.putAsync("serverMetrics", serverMetrics.toString());
-                                // divisionMetaData.putAsync("logMetrics", String.valueOf(logMetrics));
+                                    // divisionMetaData.putAsync("serverMetrics", serverMetrics.toString());
+                                    // divisionMetaData.putAsync("logMetrics", String.valueOf(logMetrics));
+                                }
+                            } catch (IOException | InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
+                                e.printStackTrace();
                             }
-                            // TODO measure runtime for this, must be cheap!
-                        } catch (IOException | InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
-                            e.printStackTrace();
                         }
+                    } catch (ExecutionException e) {
+                        LOG.warn("Heartbeat request failed with exception", e);
+                    } catch (InvalidProtocolBufferException e) {
+                        LOG.warn("Heartbeat request failed with exception", e);
                     }
 
-
-                    //Instant finish = Instant.now();
-                    //long timeElapsed = Duration.between(start, finish).toMillis();
-                    //System.out.println("Putting heartbeat took " + timeElapsed + "ms");
                     Thread.sleep(raftConfig.getHeartbeatInterval());
+
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     return;
-                } catch (ExecutionException e) {
-                    LOG.warn("Heartbeat request failed with exception", e);
-                } catch (InvalidProtocolBufferException e) {
-                    LOG.warn("Heartbeat request failed with exception", e);
                 }
             }
-
         }
     }
 

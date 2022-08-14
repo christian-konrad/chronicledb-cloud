@@ -1,5 +1,7 @@
 package de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.data;
 
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.EventStoreState;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 

@@ -21,6 +21,7 @@ public class BufferedReplicatedEventStore extends ReplicatedEventStore {
     Logger LOG = LoggerFactory.getLogger(BufferedReplicatedEventStore.class);
 
     public void insertBuffered(Event event) throws IOException, InterruptedException {
+        // TODO enforce that only the current leader is allowed to accept buffered writes!
         eventBuffer.insert(event);
     }
 

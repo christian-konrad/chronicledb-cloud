@@ -13,7 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-@RestController
+//@RestController
 @RequestMapping("/api/counter/replicated")
 public class ReplicatedCounterController {
 

@@ -83,7 +83,7 @@ class NodeInfo extends Component {
 
         const { classes } = this.props;
         const { id, host, httpPort, metadataPort, storagePath,
-            localHostAddress, localHostName, remoteHostAddress, remoteHostName,
+            localHostAddress, localHostName, remoteHostAddress,
             osName, osVersion,
             javaVersion, jdkVersion, springVersion,
             totalDiskSpace, usableDiskSpace,
@@ -91,7 +91,7 @@ class NodeInfo extends Component {
 
         const httpAddress = `${host}:${httpPort}`;
         // TODO should use https
-        const httpAdminAddress = `http://${remoteHostName}:${httpPort}/admin`;
+        const httpAdminAddress = `http://${remoteHostAddress}:${httpPort}/admin`;
         const metadataAddress = `${host}:${metadataPort}`;
 
         const formatBytes = (bytes, decimals = 2) => {
@@ -150,7 +150,6 @@ class NodeInfo extends Component {
                     <InfoListItem classes={classes} label="Local host address" content={localHostAddress} />
                     <InfoListItem classes={classes} label="Local host name" content={localHostName} />
                     <InfoListItem classes={classes} label="Remote host address" content={remoteHostAddress} />
-                    <InfoListItem classes={classes} label="Remote host name" content={remoteHostName} />
                     <InfoListItem classes={classes} label="OS name" content={osName} />
                     <InfoListItem classes={classes} label="OS version" content={osVersion} />
                     <InfoListItem classes={classes} label="Java version" content={javaVersion} />

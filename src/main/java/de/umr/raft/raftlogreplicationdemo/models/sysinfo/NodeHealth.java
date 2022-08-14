@@ -12,6 +12,8 @@ import static java.lang.System.currentTimeMillis;
 @RequiredArgsConstructor(staticName = "of") @Builder
 public class NodeHealth {
 
+    // TODO just use PeerState!
+
     public enum ConnectionState {
         CONNECTED, INTERRUPTED, DISCONNECTED
     }
@@ -23,7 +25,7 @@ public class NodeHealth {
     public static NodeHealth of(ReplicatedMetadataMap replicatedMetaDataMap) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
         val nodeId = replicatedMetaDataMap.get("nodeId");
         val heartbeat = replicatedMetaDataMap.get("heartbeat");
-        val heartbeatLong = Long.valueOf(heartbeat);
+        val heartbeatLong = heartbeat != null ? Long.parseLong(heartbeat) : 0;
 
         // TODO make those thresholds configurable in .properties
         val secondsSinceLastHeartbeat = (currentTimeMillis() - heartbeatLong) / 1000;

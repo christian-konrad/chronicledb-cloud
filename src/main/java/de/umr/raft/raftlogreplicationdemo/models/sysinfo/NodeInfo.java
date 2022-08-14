@@ -20,7 +20,6 @@ public class NodeInfo {
     @Getter private final String localHostAddress;
     @Getter private final String localHostName;
     @Getter private final String remoteHostAddress;
-    @Getter private final String remoteHostName;
     @Getter private final String osName;
     @Getter private final String osVersion;
     @Getter private final String springVersion;
@@ -49,7 +48,6 @@ public class NodeInfo {
         val storagePath = replicatedMetaDataMap.get("storagePath");
         val localHostName = replicatedMetaDataMap.get("localHostName");
         val remoteHostAddress = replicatedMetaDataMap.get("remoteHostAddress");
-        val remoteHostName = replicatedMetaDataMap.get("remoteHostName");
         val osName = replicatedMetaDataMap.get("osName");
         val osVersion = replicatedMetaDataMap.get("osVersion");
         val springVersion = replicatedMetaDataMap.get("springVersion");
@@ -69,7 +67,6 @@ public class NodeInfo {
                 .localHostAddress(localHostAddress)
                 .localHostName(localHostName)
                 .remoteHostAddress(remoteHostAddress)
-                .remoteHostName(remoteHostName)
                 .osName(osName)
                 .osVersion(osVersion)
                 .springVersion(springVersion)

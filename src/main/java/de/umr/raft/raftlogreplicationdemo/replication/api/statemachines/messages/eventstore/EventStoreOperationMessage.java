@@ -54,6 +54,7 @@ public class EventStoreOperationMessage implements ExecutableMessage<EventStoreS
 
     @Override
     public CompletableFuture<EventStoreOperationResultProto> apply(EventStoreState eventStoreState) {
+        // TODO could also have executors as type params
         return EventStoreOperationExecutor.of(eventStoreOperation).apply(eventStoreState);
     }
 

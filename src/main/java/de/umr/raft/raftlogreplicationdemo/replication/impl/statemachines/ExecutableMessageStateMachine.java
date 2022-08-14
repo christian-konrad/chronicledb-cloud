@@ -305,7 +305,7 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
         if (!executableMessage.isTransactionMessage() || !executableMessage.isValid()) {
             // LOG.info("TRANSACTION - Message execution canceled");
             // TODO also add reason?
-            return cancelMessageExecution(executableMessage);
+                return cancelMessageExecution(executableMessage);
         }
 
         //update the last applied term and index

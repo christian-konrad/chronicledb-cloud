@@ -141,6 +141,7 @@ public abstract class BaseConcurrentEventBuffer implements EventBuffer {
         // as we serialize here but do not use the serialized event, we could store it
         // and use it later in messaging to improve performance and reduce redundancy
 
+        // TODO just use event count, not event bytes for the buffer. State out in thesis that the buffer must be in bytes accordingly to the raft log buffer max size
         int estimatedEventSize = eventSerializer.getEstimatedEventSize(event);
 
         addEventToQueue(event);

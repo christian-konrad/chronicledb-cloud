@@ -13,15 +13,15 @@ public interface MetadataOperationExecutor<ResultType extends Message> extends O
     static MetadataOperationExecutor of(MetadataOperationProto metaDataOperation) {
         switch (metaDataOperation.getOperationType()) {
             case SET:
-                return MetadataSetOperationExecutor.of(metaDataOperation);
+                return SetOperationExecutor.of(metaDataOperation);
             case DELETE:
-                return MetadataDeleteOperationExecutor.of(metaDataOperation);
+                return DeleteOperationExecutor.of(metaDataOperation);
             case GET:
-                return MetadataGetOperationExecutor.of(metaDataOperation);
+                return GetOperationExecutor.of(metaDataOperation);
             case GET_ALL_FOR_SCOPE:
-                return MetadataGetAllForScopeOperationExecutor.of(metaDataOperation);
+                return GetAllForScopeOperationExecutor.of(metaDataOperation);
             case GET_ALL:
-                return MetadataGetAllOperationExecutor.of(metaDataOperation);
+                return GetAllOperationExecutor.of(metaDataOperation);
             case NULL:
             case UNRECOGNIZED:
             default:

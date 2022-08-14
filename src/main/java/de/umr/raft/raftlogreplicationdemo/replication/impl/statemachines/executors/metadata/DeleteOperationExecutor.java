@@ -5,43 +5,48 @@ import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperatio
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.MetadataOperationType;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.OperationResultStatus;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.metadata.MetadataQueryOperationExecutor;
+import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.metadata.MetadataTransactionOperationExecutor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RequiredArgsConstructor(staticName = "of")
-public class MetadataGetAllForScopeOperationExecutor implements MetadataQueryOperationExecutor {
-    @Getter private final MetadataOperationProto metaDataOperation;
+public class DeleteOperationExecutor implements MetadataTransactionOperationExecutor {
+@Getter private final MetadataOperationProto metaDataOperation;
 
-    Logger LOG = LoggerFactory.getLogger(MetadataGetAllForScopeOperationExecutor.class);
-
-    @Override
     public CompletableFuture<MetadataOperationResultProto> apply(Map<String, Map<String, String>> metadata) {
         val scopeId = metaDataOperation.getScopeId();
+        val key = metaDataOperation.getKey();
 
-        Map<String, String> scopeMetadata = metadata.get(scopeId);
+        Map<String, String> nodeMetadata = metadata.containsKey(scopeId)
+                ? metadata.get(scopeId)
+                : new ConcurrentHashMap<>();
 
-        return CompletableFuture.completedFuture(createMetadataOperationResult(scopeMetadata));
+        String removedValue = nodeMetadata.remove(key);
+
+        if (nodeMetadata.isEmpty()) {
+            metadata.remove(scopeId);
+        } else {
+            metadata.put(scopeId, nodeMetadata);
+        }
+
+        return CompletableFuture.completedFuture(createMetadataOperationResult(removedValue));
     }
 
-    // slightly complicated way to build a map, but that's what protobuf needs here (as we support multi-level maps)
-    private MetadataOperationResultProto createMetadataOperationResult(Map<String, String> metadata) {
-        val resultMap = MetadataQueryOperationExecutor.createResultMapNode(metadata);
-
+    private MetadataOperationResultProto createMetadataOperationResult(String removedValue) {
         return MetadataOperationResultProto.newBuilder()
                 .setOperationType(getOperationType())
-                .setResult(resultMap)
+                .setResult(MetadataQueryOperationExecutor.createResultMapLeaf(removedValue))
                 .setStatus(OperationResultStatus.OK)
                 .build();
     }
 
     @Override
     public MetadataOperationType getOperationType() {
-        return MetadataOperationType.GET_ALL_FOR_SCOPE;
+        return MetadataOperationType.DELETE;
     }
 }

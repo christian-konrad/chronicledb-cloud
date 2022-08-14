@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.nio.file.Path;
 
-// TODO some interface?
 public class EventStoreState implements StateMachineState {
 
     protected static final Logger LOG =

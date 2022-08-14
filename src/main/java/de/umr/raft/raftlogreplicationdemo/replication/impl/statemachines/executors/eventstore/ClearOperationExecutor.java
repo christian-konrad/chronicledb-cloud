@@ -2,12 +2,9 @@ package de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.execut
 
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.*;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.eventstore.EventStoreTransactionOperationExecutor;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.metadata.MetadataQueryOperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.EventStoreState;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.serialization.EventSerializer;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,9 +12,9 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor(staticName = "of")
-public class EventStoreClearOperationExecutor implements EventStoreTransactionOperationExecutor {
+public class ClearOperationExecutor implements EventStoreTransactionOperationExecutor {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EventStoreClearOperationExecutor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ClearOperationExecutor.class);
 
     @Getter
     private final EventStoreOperationProto eventStoreOperation;

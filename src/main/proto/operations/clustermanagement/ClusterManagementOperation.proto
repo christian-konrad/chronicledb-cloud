@@ -1,0 +1,108 @@
+syntax = "proto3";
+option java_package = "de.umr.raft.raftlogreplicationdemo.replication.api.proto";
+// option java_outer_classname = "ClusterManagementOperationProtos";
+option java_generate_equals_and_hash = true;
+option java_multiple_files = true;
+package raftlogreplicationdemo.replication.api.proto.operations.clustermanagement;
+import "operations/OperationResultStatus.proto";
+
+message RaftPeerProto {
+    bytes id = 1; // id of the peer
+    string address = 2; // e.g. IP address, hostname etc.
+}
+
+message RaftGroupProto {
+    bytes id = 1; // id of the group
+    repeated RaftPeerProto peers = 2; //list of the peers
+}
+
+message PartitionNameProto {
+    string name = 1;
+    string serverName = 2;
+}
+
+enum PartitionState {
+    UNKNOWN = 0;
+    REGISTERING = 1;
+    REGISTERED = 2;
+    DETACHED = 3;
+}
+
+message PartitionInfoProto {
+    PartitionNameProto partitionName = 1;
+    RaftGroupProto raftGroup = 2;
+    PartitionState partitionState = 3;
+}
+
+enum ClusterManagementOperationType {
+    NULL = 0; // null/noop operation that does nothing
+    REGISTER_PARTITION = 1; // registers a new partition for a set of peers and a state machine
+    DETACH_PARTITION = 2; // detaches a partition without deleting its persisted contents
+    LIST_PARTITIONS = 3; // lists all registered partitions (all or for a specific state machine)
+    HEARTBEAT = 4; // sends a heartbeat to let the cluster know of this peer
+}
+
+message RegisterPartitionRequestProto {
+    string statemachine_classname = 1; // name of the state machine class
+    string partition_name = 2; // name of the partition to create. Must be unique per statemachine
+    // repeated ClusterNode nodes = 2;
+    uint32 replication_factor = 3; // determines number of nodes to include into this partition. Min 3, max # of available nodes
+}
+
+message DetachPartitionRequestProto {
+    string partition_name = 1; // name of the partition
+}
+
+message ListPartitionsRequestProto {
+    string statemachine_classname = 1; // name of the state machine class
+}
+
+message HeartbeatRequestProto {
+    RaftPeerProto peer = 1; // the peer sending the heartbeat
+}
+
+message ClusterManagementRequestProto {
+    oneof Type {
+        RegisterPartitionRequestProto registerPartitionRequest = 1;
+        DetachPartitionRequestProto detachPartitionRequest = 2;
+        ListPartitionsRequestProto listPartitionsRequest = 3;
+        HeartbeatRequestProto heartbeatRequestProto = 4;
+    }
+}
+
+message ClusterManagementOperationProto {
+    ClusterManagementOperationType operation_type = 1;
+    ClusterManagementRequestProto request = 2;
+}
+
+message RegisterPartitionResponseProto {
+    PartitionInfoProto partition_info = 1;
+}
+
+message DetachPartitionResponseProto {
+    // empty message
+}
+
+message HeartbeatResponseProto {
+    // empty message
+}
+
+message ListPartitionsResponseProto {
+    repeated PartitionInfoProto partition_info = 1;
+}
+
+message ClusterManagementResponseProto {
+    oneof Type {
+        RegisterPartitionResponseProto registerPartitionResponse = 1;
+        DetachPartitionResponseProto detachPartitionResponse = 2;
+        ListPartitionsResponseProto listPartitionsResponse = 3;
+        HeartbeatResponseProto heartbeatResponse = 4;
+    }
+}
+
+message ClusterManagementOperationResultProto {
+    ClusterManagementOperationType operation_type = 1;
+    OperationResultStatus status = 2;
+    bool is_null_result = 3;
+    ClusterManagementResponseProto response = 4;
+}

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.InvocationTargetException;
 
-@Component
+//@Component
 public class ClusterManagementMultiRaftServerStartupRunner extends MultiRaftReplicationServerStartupRunner<ClusterManagementMultiRaftServer> {
 
     @Autowired

@@ -1,7 +1,6 @@
 package de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore;
 
 import de.umr.chronicledb.common.query.range.Range;
-import de.umr.chronicledb.event.store.tabPlus.aggregation.EventAggregationValues;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.EventStoreOperationProto;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.EventStoreOperationResultProto;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.EventStoreOperationType;
@@ -13,12 +12,11 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 
-import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor(staticName = "of")
-public class EventStoreGetKeyRangeOperationExecutor implements EventStoreQueryOperationExecutor {
+public class GetKeyRangeOperationExecutor implements EventStoreQueryOperationExecutor {
     @Getter
     private final EventStoreOperationProto eventStoreOperation;
 

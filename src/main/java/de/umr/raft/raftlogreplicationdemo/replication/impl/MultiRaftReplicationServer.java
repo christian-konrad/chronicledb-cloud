@@ -75,7 +75,7 @@ public abstract class MultiRaftReplicationServer implements IReplicationServer.R
         // TODO can not use metadata client as this causes a deadlock since no leader server already started
         // TODO we NEED a seperate app logic server where raft groups can be spawned at runtime
         // TODO that server must wait for meta server to start
-        // TODO otherwhise, there is no way to ask for metadata and thus running groups at all
+        // TODO otherwise, there is no way to ask for metadata and thus running groups at all
         // TODO do so after docker build for AWS
 
 //        val replicatedMetaDataMap = ReplicatedMetadataMap.ofRaftGroupScope(metaDataClient);

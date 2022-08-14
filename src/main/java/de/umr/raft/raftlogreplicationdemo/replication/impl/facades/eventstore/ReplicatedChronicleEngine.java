@@ -4,7 +4,6 @@ import de.umr.event.Event;
 import de.umr.event.schema.EventSchema;
 import de.umr.jepc.v2.api.epa.EPA;
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
-import de.umr.raft.raftlogreplicationdemo.models.eventstore.ClearStreamRequest;
 import de.umr.raft.raftlogreplicationdemo.models.eventstore.QueryRequest;
 import de.umr.raft.raftlogreplicationdemo.models.eventstore.QueryResponse;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
@@ -25,6 +24,8 @@ import java.util.concurrent.ExecutionException;
 
 @Component
 public class ReplicatedChronicleEngine extends BaseChronicleEngine<BufferedReplicatedEventStore> {
+
+    // TODO also consider reader/writer facades, or pub/sub facades...
 
     Logger LOG = LoggerFactory.getLogger(ReplicatedChronicleEngine.class);
 

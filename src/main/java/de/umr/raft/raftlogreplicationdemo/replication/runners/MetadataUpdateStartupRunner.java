@@ -24,7 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.NumberFormat;
 
-@Component
+//@Component
 @RequiredArgsConstructor(staticName = "of")
 public class MetadataUpdateStartupRunner implements ApplicationRunner {
 
@@ -55,8 +55,7 @@ public class MetadataUpdateStartupRunner implements ApplicationRunner {
         replicatedMetaDataMap.put("localHostAddress", InetAddress.getLocalHost().getHostAddress());
         replicatedMetaDataMap.put("localHostName", InetAddress.getLocalHost().getHostName());
 
-        replicatedMetaDataMap.put("remoteHostAddress", InetAddress.getLoopbackAddress().getHostAddress());
-        replicatedMetaDataMap.put("remoteHostName", InetAddress.getLoopbackAddress().getHostName());
+        replicatedMetaDataMap.put("remoteHostAddress", raftConfig.getPublicHostAddress());
 
         replicatedMetaDataMap.put("osName", System.getProperty("os.name"));
         replicatedMetaDataMap.put("osVersion", System.getProperty("os.version"));

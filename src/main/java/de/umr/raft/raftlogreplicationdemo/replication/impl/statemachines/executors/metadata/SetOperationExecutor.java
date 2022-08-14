@@ -12,11 +12,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RequiredArgsConstructor(staticName = "of")
-public class MetadataSetOperationExecutor implements MetadataTransactionOperationExecutor {
+public class SetOperationExecutor implements MetadataTransactionOperationExecutor {
     @Getter private final MetadataOperationProto metaDataOperation;
 
     @Override
     public CompletableFuture<MetadataOperationResultProto> apply(Map<String, Map<String, String>> metadata) {
+
+        // TODO what about reducer kind of style instead of executors?
+        // TODO explain this pattern in the doc (state, executors (that map proto message to state change))
+
         val scopeId = metaDataOperation.getScopeId();
         val key = metaDataOperation.getKey();
         val value = metaDataOperation.getValue();

@@ -77,7 +77,7 @@ public class EventSerializer {
             case DOUBLE:
                 return Double.BYTES;
             case STRING:
-                // TODO not efficient
+                // TODO not efficient - just allocate a fixed size for testing.
                 String value = event.get(attributeIndex, String.class);
                 if (value == null) return 0;
                 return value.getBytes(DEFAULT_CHARSET).length
@@ -128,7 +128,7 @@ public class EventSerializer {
     }
 
     private EventProto toProtoUsingNativeSerializer(Event event) throws BufferOverflowException {
-        val serializer = de.umr.chronicledb.event.serialization.EventSerializer.create(eventSchema);
+        val serializer = de.umr.chronicledb.event.serialization.EventSerializer.create(eventSchema); // TODO cache in event store/chronicleEngine
         val byteBuffer = serializeEventToByteBuffer(event, serializer, getEstimatedEventSize(event), 1);
 
         byteBuffer.rewind();

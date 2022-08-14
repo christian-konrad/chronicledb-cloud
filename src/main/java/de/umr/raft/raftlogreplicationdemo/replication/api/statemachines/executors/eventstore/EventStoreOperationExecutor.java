@@ -4,10 +4,10 @@ import de.umr.raft.raftlogreplicationdemo.replication.api.proto.*;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.NullOperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.OperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.EventStoreState;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.EventStoreClearOperationExecutor;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.EventStoreGetAggregatesOperationExecutor;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.EventStoreGetKeyRangeOperationExecutor;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.EventStorePushEventOperationExecutor;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.ClearOperationExecutor;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.GetAggregatesOperationExecutor;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.GetKeyRangeOperationExecutor;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.eventstore.PushEventOperationExecutor;
 import org.apache.ratis.thirdparty.com.google.protobuf.Message;
 
 import java.util.concurrent.CompletableFuture;
@@ -16,15 +16,15 @@ public interface EventStoreOperationExecutor<ResultType extends Message> extends
     static EventStoreOperationExecutor of(EventStoreOperationProto eventStoreOperation) {
         switch (eventStoreOperation.getOperationType()) {
             case PUSH_EVENTS:
-                return EventStorePushEventOperationExecutor.of(eventStoreOperation);
+                return PushEventOperationExecutor.of(eventStoreOperation);
             // case QUERY:
             //     return EventStoreQueryOperationExecutor.of(eventStoreOperation);
             case AGGREGATE:
-                return EventStoreGetAggregatesOperationExecutor.of(eventStoreOperation);
+                return GetAggregatesOperationExecutor.of(eventStoreOperation);
             case GET_KEY_RANGE:
-                return EventStoreGetKeyRangeOperationExecutor.of(eventStoreOperation);
+                return GetKeyRangeOperationExecutor.of(eventStoreOperation);
             case CLEAR:
-                return EventStoreClearOperationExecutor.of(eventStoreOperation);
+                return ClearOperationExecutor.of(eventStoreOperation);
             case NULL:
             case UNRECOGNIZED:
             default:

@@ -51,3 +51,7 @@ logs/*
 # Bundled fonts
 *.woff
 *.woff2
+
+# MacOS stuff
+.DS_Store
+

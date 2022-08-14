@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-@RestController
+//@RestController
 @RequestMapping("/api/sys-info/performance")
 public class MeasurePerformanceController {
 

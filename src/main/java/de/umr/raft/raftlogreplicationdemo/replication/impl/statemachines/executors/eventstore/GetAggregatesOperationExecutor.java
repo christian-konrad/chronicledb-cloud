@@ -2,40 +2,27 @@ package de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.execut
 
 import de.umr.chronicledb.event.store.tabPlus.aggregation.EventAggregationValues;
 import de.umr.chronicledb.event.store.tabPlus.aggregation.impl.EventAggregate;
-import de.umr.event.ex.EPRuntimeException;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.*;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.OperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.eventstore.EventStoreQueryOperationExecutor;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.eventstore.EventStoreTransactionOperationExecutor;
-import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.metadata.MetadataQueryOperationExecutor;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.eventstore.ReplicatedEventStore;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.EventStoreState;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.serialization.AggregateRequestSerializer;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.serialization.EventSerializer;
-import de.umr.raft.raftlogreplicationdemo.util.ThrowableUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.apache.ratis.util.JavaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.SerializationUtils;
-import org.springframework.web.util.JavaScriptUtils;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor(staticName = "of")
-public class EventStoreGetAggregatesOperationExecutor implements EventStoreQueryOperationExecutor {
+public class GetAggregatesOperationExecutor implements EventStoreQueryOperationExecutor {
 
-    Logger LOG = LoggerFactory.getLogger(EventStoreGetAggregatesOperationExecutor.class);
+    Logger LOG = LoggerFactory.getLogger(GetAggregatesOperationExecutor.class);
 
     @Getter
     private final EventStoreOperationProto eventStoreOperation;

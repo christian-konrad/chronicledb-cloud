@@ -6,14 +6,11 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 
-import java.util.AbstractMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor(staticName = "of")
-public class MetadataGetOperationExecutor implements MetadataQueryOperationExecutor {
+public class GetOperationExecutor implements MetadataQueryOperationExecutor {
 @Getter private final MetadataOperationProto metaDataOperation;
 
     @Override

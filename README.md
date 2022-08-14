@@ -34,14 +34,12 @@ PEERS=n1:localhost:6000,n2:localhost:6001,n3:localhost:6002
 ID=n0
 HTTP_PORT=8080
 META_PORT=6000
-RAFT_PORT=6050
 
 ./mvnw spring-boot:run -Dspring-boot.run.arguments="\
 --node-id={ID} \
 --server.address=localhost \
 --server.port={HTTP_PORT} \
 --metadata-port={META_PORT} \
---replication-port={RAFT_PORT} \
 --storage=/tmp/raft-demo/{ID} \
 --peers={PEERS}"
 ```
@@ -67,7 +65,6 @@ java -jar target/raft-log-replication-demo-0.0.1-SNAPSHOT.jar \
 --server.address=localhost \
 --server.port={HTTP_PORT} \
 --metadata-port={META_PORT} \
---replication-port={RAFT_PORT} \
 --storage=/tmp/raft-demo/{ID} \
 --peers={PEERS}"
 ```
@@ -83,7 +80,6 @@ java -jar target/raft-log-replication-demo-0.0.1-SNAPSHOT.jar \
 --server.address=localhost \
 --server.port=8080 \
 --metadata-port=6000 \
---replication-port=6050 \
 --storage=/tmp/raft-demo/${ID} \
 --peers=${PEERS}
 
@@ -93,7 +89,6 @@ java -jar target/raft-log-replication-demo-0.0.1-SNAPSHOT.jar \
 --server.address=localhost \
 --server.port=8081 \
 --metadata-port=6001 \
---replication-port=6051 \
 --storage=/tmp/raft-demo/${ID} \
 --peers=${PEERS}
 
@@ -103,7 +98,6 @@ java -jar target/raft-log-replication-demo-0.0.1-SNAPSHOT.jar \
 --server.address=localhost \
 --server.port=8082 \
 --metadata-port=6002 \
---replication-port=6052 \
 --storage=/tmp/raft-demo/${ID} \
 --peers=${PEERS}
 ```
@@ -122,7 +116,6 @@ docker run -p {HTTP_PORT}:{HTTP_PORT} raft-log-replication-demo \
 --server.address=localhost \
 --server.port={HTTP_PORT} \
 --metadata-port={META_PORT} \
---replication-port={RAFT_PORT} \
 --storage=/tmp/raft-demo/{ID} \
 --peers={PEERS}
 ```
@@ -140,7 +133,6 @@ docker run -p 8080:8080 raft-log-replication-demo \
 --server.address=localhost \
 --server.port=8080 \
 --metadata-port=6000 \
---replication-port=6050 \
 --storage=/tmp/raft-demo/${ID} \
 --peers={PEERS}
 
@@ -150,7 +142,6 @@ docker run -p 8080:8080 raft-log-replication-demo \
 --server.address=localhost \
 --server.port=8081 \
 --metadata-port=6001 \
---replication-port=6051 \
 --storage=/tmp/raft-demo/${ID} \
 --peers=${PEERS}
 
@@ -160,7 +151,6 @@ docker run -p 8080:8080 raft-log-replication-demo \
 --server.address=localhost \
 --server.port=8082 \
 --metadata-port=6002 \
---replication-port=6052 \
 --storage=/tmp/raft-demo/${ID} \
 --peers=${PEERS}
 ```
