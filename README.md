@@ -1,6 +1,6 @@
 # ChronicleDB on a Raft
 
----
+[![DOI](https://zenodo.org/badge/394248374.svg)](https://zenodo.org/badge/latestdoi/394248374)
 
 ## Build
 

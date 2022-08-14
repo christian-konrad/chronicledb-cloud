@@ -4,6 +4,7 @@
 cff-version: 1.2.0
 title: ChronicleDB on a Raft
 message: 'If you use this software, please cite it as below.'
+doi: 10.5281/zenodo.6991168
 type: software
 authors:
   - given-names: Christian
