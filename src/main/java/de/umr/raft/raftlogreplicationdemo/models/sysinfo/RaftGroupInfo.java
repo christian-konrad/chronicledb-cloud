@@ -14,32 +14,39 @@ public class RaftGroupInfo {
     @Getter @NonNull private final String groupId;
     @Getter @NonNull private final String uuid;
     @Getter @NonNull private final List<NodeInfo> nodes;
-    @Getter @NonNull private final String leaderId;
-    @Getter @NonNull private final long currentLeaderTerm;
-    @Getter @NonNull private final String selfRole;
-    @Getter @NonNull private final long roleSince;
+    // @Getter @NonNull private final String leaderId;
+    // @Getter @NonNull private final long currentLeaderTerm;
+    // @Getter @NonNull private final String selfRole;
+    // @Getter @NonNull private final long roleSince;
     @Getter @NonNull private final boolean isStorageHealthy;
     @Getter @NonNull private final String stateMachineClass;
     @Getter @NonNull private final String serverName;
+    //@Getter @NonNull private final String roleInfo;
+    //@Getter @NonNull private final RaftGroupRoleInfo raftGroupRoleInfo;
 
     // TODO state machine instance info of this group
+
+    // TODO draw as diagram with states of nodes
+    //  therefore, need state per node in this group
+    //  TODO also return peer priority and admin, client and datastream address
 
     public static RaftGroupInfo of(GroupInfoReply raftGroupInfoReply, String raftGroupName, String stateMachineClass, String serverName) {
         val raftGroup = raftGroupInfoReply.getGroup();
         val raftGroupId = raftGroup.getGroupId();
+        // TODO division?
+
+
+
         val peers = raftGroup.getPeers();
         val peersAsNodeInfo = peers.stream().map(NodeInfo::of).collect(Collectors.toList());
+        // TODO division info at this point
         val isStorageHealthy = raftGroupInfoReply.isRaftStorageHealthy();
-        val currentLeaderTerm = raftGroupInfoReply.getRoleInfoProto().getLeaderInfo().getTerm();
 
         val roleInfo = raftGroupInfoReply.getRoleInfoProto();
 
-        val selfRole = roleInfo.getRole().name();
-        val roleSince = roleInfo.getRoleElapsedTimeMs();
+        //val raftGroupRoleInfo = RaftGroupRoleInfo.of(roleInfo, peersAsNodeInfo);
 
-        val leaderId = roleInfo.getFollowerInfo().getLeaderInfo().getId().getId().toString(Charset.defaultCharset());
-
-        return new RaftGroupInfo(raftGroupName, raftGroupId.toString(), raftGroupId.getUuid().toString(), peersAsNodeInfo, leaderId, currentLeaderTerm, selfRole, roleSince, isStorageHealthy, stateMachineClass, serverName);
+        return new RaftGroupInfo(raftGroupName, raftGroupId.toString(), raftGroupId.getUuid().toString(), peersAsNodeInfo, isStorageHealthy, stateMachineClass, serverName);
     }
 
     public static RaftGroupInfo of(GroupInfoReply raftGroupInfoReply) {

@@ -18,7 +18,7 @@ abstract class MultiRaftReplicationServerStartupRunner<ReplicationServer extends
 
     protected ReplicationServer raftReplicationServer;
     private final RaftConfig raftConfig;
-    private final ClusterMetadataReplicationClient metaDataClient;
+    private final ClusterMetadataReplicationClient metaDataClient; // TODO remove here
 
     @Autowired
     public MultiRaftReplicationServerStartupRunner(RaftConfig raftConfig, ClusterMetadataReplicationClient metaDataClient, MultiRaftReplicationServer multiRaftReplicationServer) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
@@ -29,7 +29,7 @@ abstract class MultiRaftReplicationServerStartupRunner<ReplicationServer extends
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        LOG.info("Application started with option names : {}",
+        LOG.info("Raft server started with options : {}",
                 args.getOptionNames());
 
         // TODO catch exceptions to prevent it from toggling a "Error starting ApplicationContext"

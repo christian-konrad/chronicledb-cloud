@@ -11,6 +11,7 @@ import org.apache.ratis.server.RaftServer;
 import org.apache.ratis.server.protocol.TermIndex;
 import org.apache.ratis.server.raftlog.RaftLog;
 import org.apache.ratis.server.storage.RaftStorage;
+import org.apache.ratis.server.storage.RaftStorageDirectory;
 import org.apache.ratis.statemachine.TransactionContext;
 import org.apache.ratis.statemachine.impl.BaseStateMachine;
 import org.apache.ratis.statemachine.impl.SimpleStateMachineStorage;
@@ -21,6 +22,9 @@ import org.apache.ratis.util.AutoCloseableLock;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -30,8 +34,20 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public abstract class ExecutableMessageStateMachine<StateObjectClass, ExecutableMessageImpl extends ExecutableMessage, ExecutionResultProto extends org.apache.ratis.thirdparty.com.google.protobuf.Message> extends BaseStateMachine {
 
+//    im FileStoreExample:
+//
+//            - Statt RaftLog wird instant in den FileStore geschrieben
+//- Die Transactions auf der Statemachine selber markieren die Daten dann nur als "committed" im FileStore
+//- in startTransaction werden die direkt schreibenden Messages "abgefangen" und modifiziert, damit nur Metadaten in die Statemachine geschrieben werden, während die echten Daten im FileStore sind
+//
+//- Analogie zum EventStore:
+//            - Entweder dort auch Indexeinträge als Committed markieren oder einfach dank der AppendOnly Annahme (außerhalb von OOO) einen Pointer setzen - in dem EventStoreState wrapper
+
+
     // TODO have another extending abstract class with a custom, segmented state machine storage for chronicle
     protected final SimpleStateMachineStorage storage = new SimpleStateMachineStorage();
+
+    protected RaftStorageDirectory storageDir;
 
     // private final Supplier<? extends ExecutableMessageImpl> executableMessageSupplier;
 
@@ -46,6 +62,10 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
     }
 
     abstract protected StateObjectClass getStateObject();
+
+    abstract protected Object createStateSnapshot();
+
+    protected abstract void initState() throws IOException;
 
     abstract protected void clearState();
 
@@ -76,7 +96,11 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
                            RaftStorage raftStorage) throws IOException {
         super.initialize(server, groupId, raftStorage);
         this.storage.init(raftStorage);
-        loadSnapshot(storage.getLatestSnapshot());
+        this.storageDir = raftStorage.getStorageDir();
+        val snapshot = storage.getLatestSnapshot();
+        initState();
+        // TODO fileStore example does not load any snapshots..
+        loadSnapshot(snapshot);
     }
 
     /**
@@ -163,7 +187,7 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
         try(AutoCloseableLock readLock = readLock();
             ObjectOutputStream out = new ObjectOutputStream(
                     new BufferedOutputStream(new FileOutputStream(snapshotFile)))) {
-            out.writeObject(getStateObject());
+            out.writeObject(createStateSnapshot());
         } catch(IOException ioe) {
             LOG.warn("Failed to write snapshot file \"" + snapshotFile
                     + "\", last applied index=" + last);
@@ -183,12 +207,9 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
      * @param request the executable message
      * @return the response message
      */
-    //@SneakyThrows
     @Override
     public CompletableFuture<Message> query(Message request) {
-        // TODO remove sneaky throws and add actual error handling
-
-        // LOG.info("QUERY - Before transforming message to executable message");
+         // LOG.info("QUERY - Before transforming message to executable message");
 
         final ExecutableMessageImpl executableMessage;
         try {
@@ -199,15 +220,15 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
             return ERROR_MESSAGE;
         }
 
-        // LOG.info("QUERY - After transforming message to executable message");
+         // LOG.info("QUERY - After transforming message to executable message");
 
         // check if is valid transaction message
         if (!executableMessage.isQueryMessage() || !executableMessage.isValid()) {
-            // LOG.info("QUERY - Message execution canceled");
+             // LOG.info("QUERY - Message execution canceled");
             try {
                 return cancelMessageExecution(executableMessage);
             } catch (ExecutionException | InterruptedException e) {
-                // LOG.error("Cancelling of the executable message failed", e);
+                 // LOG.error("Cancelling of the executable message failed", e);
                 return ERROR_MESSAGE;
             }
         }
@@ -222,21 +243,37 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
               .getActualTypeArguments()[0];
          */
 
-        // LOG.info("QUERY - Before executing the message");
+         // LOG.info("QUERY - Before executing the message");
 
         try (AutoCloseableLock readLock = readLock()) {
             // actual execution of the command
             result = (ExecutionResultProto) executableMessage.apply(getStateObject()).get();
-            // LOG.info("QUERY - After executing the message");
+             // LOG.info("QUERY - After executing the message");
             // TODO may use response.getStatus() ?
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (ExecutionException | InterruptedException e) { // TODO all exceptions?
             // LOG.error("Execution of the executable message failed", e);
+            // LOG.info("QUERY - Sending error message");
             return ERROR_MESSAGE;
         }
 
-        // LOG.info("QUERY - Before sending the message");
+         // LOG.info("QUERY - Before sending the message {}", result.toString());
 
         return CompletableFuture.completedFuture(Message.valueOf(result.toByteString()));
+    }
+
+    /**
+     * Override to run side effects or modify the transaction context before applying a transaction
+     */
+    public void beforeApplyTransaction(TransactionContext trx) {}
+
+    /**
+     * Override to run side effects or modify the transaction result after applying a transaction
+     */
+    public void afterApplyTransaction(ExecutionResultProto result) {}
+
+    // TODO remove after tests
+    public boolean getShouldLogTransactionRuntime() {
+        return false;
     }
 
     /**
@@ -249,6 +286,9 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
     @Override
     public CompletableFuture<Message> applyTransaction(TransactionContext trx) {
 
+        beforeApplyTransaction(trx);
+        Instant start = Instant.now();
+
         final RaftProtos.LogEntryProto entry = trx.getLogEntry();
         // TODO remove sneaky throws and add actual error handling
 
@@ -259,13 +299,13 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
         final ExecutableMessageImpl executableMessage =
                 createExecutableMessageOf(entry.getStateMachineLogEntry().getLogData());
 
-        // LOG.info("TRANSACTION - Got message from log");
+         // LOG.info("TRANSACTION - Got message from log");
 
         // check if is valid transaction message
         if (!executableMessage.isTransactionMessage() || !executableMessage.isValid()) {
             // LOG.info("TRANSACTION - Message execution canceled");
             // TODO also add reason?
-            return cancelMessageExecution(executableMessage);
+                return cancelMessageExecution(executableMessage);
         }
 
         //update the last applied term and index
@@ -285,6 +325,8 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
 
         // LOG.info("TRANSACTION - After executing the message");
 
+        afterApplyTransaction(result);
+
         // confirm execution (TODO or else return error)
         final CompletableFuture<Message> response =
                 CompletableFuture.completedFuture(Message.valueOf(result.toByteString()));
@@ -292,14 +334,21 @@ public abstract class ExecutableMessageStateMachine<StateObjectClass, Executable
         // LOG.info("TRANSACTION - Before wrapping in response");
 
         // log what happened
-        final RaftProtos.RaftPeerRole role = trx.getServerRole();
-        if (role == RaftProtos.RaftPeerRole.LEADER) {
-            LOG.info("{}:{}-{}: {}", role, getId(), index, executableMessage);
-        } else {
-            LOG.debug("{}:{}-{}: {}", role, getId(), index, executableMessage);
-        }
-        if (LOG.isTraceEnabled()) {
-            LOG.trace("{}-{}: state={}", getId(), index, getStateObject());
+//        final RaftProtos.RaftPeerRole role = trx.getServerRole();
+//        if (role == RaftProtos.RaftPeerRole.LEADER) {
+//            LOG.info("{}:{}-{}: {}", role, getId(), index, executableMessage);
+//        } else {
+//            LOG.debug("{}:{}-{}: {}", role, getId(), index, executableMessage);
+//        }
+//        if (LOG.isTraceEnabled()) {
+//            LOG.trace("{}-{}: state={}", getId(), index, getStateObject());
+//        }
+
+        Instant end = Instant.now();
+
+        if (getShouldLogTransactionRuntime()) {
+            long timeElapsed = Duration.between(start, end).toMillis();
+            LOG.info("Executing transaction took " + timeElapsed + "ms");
         }
 
         return response;

@@ -1,5 +1,6 @@
 package de.umr.raft.raftlogreplicationdemo.replication.api;
 
+import de.umr.raft.raftlogreplicationdemo.replication.api.proto.PartitionNameProto;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +21,13 @@ public class PartitionName {
     // to change over time. We should account for this with an
     // API which can naturally evolve.
 
-    @Getter @NonNull final String stateMachineClassName;
+    // TODO do we need serverName?
+    @Getter @NonNull final String serverName;
+    // TODO include state machine name?
     @Getter @NonNull final String name;
+
     public String getFullyQualifiedName() {
-        return stateMachineClassName + ":" + name;
+        return serverName + ":" + name;
     }
 
     @Override public int hashCode() {
@@ -40,6 +44,9 @@ public class PartitionName {
             throw new InvalidPartitionNameException();
         }
         return PartitionName.of(parts[0], parts[1]);
+    }
+    public static PartitionName of(PartitionNameProto partitionName) {
+        return PartitionName.of(partitionName.getServerName(), partitionName.getName());
     }
 
 //    public static PartitionName parseFrom(ByteString partitionName)

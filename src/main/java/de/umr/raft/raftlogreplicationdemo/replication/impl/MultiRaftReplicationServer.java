@@ -4,8 +4,9 @@ import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
 import de.umr.raft.raftlogreplicationdemo.replication.IReplicationServer;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.ReplicatedMetadataMap;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata.ReplicatedMetadataMap;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.StateMachineProvider;
+import lombok.Getter;
 import lombok.val;
 import org.apache.ratis.client.RaftClient;
 import org.apache.ratis.conf.Parameters;
@@ -41,6 +42,8 @@ public abstract class MultiRaftReplicationServer implements IReplicationServer.R
     private final RaftServer raftServer;
     protected final RaftConfig raftConfig;
 
+    @Getter private boolean isRunning = false;
+
     // TODO or method to return this?
     //protected List<StateMachineProvider> stateMachineProviders = new ArrayList<>();
     // stateMachineProvider.createStateMachineInstance()
@@ -72,7 +75,7 @@ public abstract class MultiRaftReplicationServer implements IReplicationServer.R
         // TODO can not use metadata client as this causes a deadlock since no leader server already started
         // TODO we NEED a seperate app logic server where raft groups can be spawned at runtime
         // TODO that server must wait for meta server to start
-        // TODO otherwhise, there is no way to ask for metadata and thus running groups at all
+        // TODO otherwise, there is no way to ask for metadata and thus running groups at all
         // TODO do so after docker build for AWS
 
 //        val replicatedMetaDataMap = ReplicatedMetadataMap.ofRaftGroupScope(metaDataClient);
@@ -107,6 +110,29 @@ public abstract class MultiRaftReplicationServer implements IReplicationServer.R
     }
 
     /**
+     * Returns the Division of this Server for a particular RaftGroup.
+     * A Division holds the role a Server (Node) plays currently in a given RaftGroup.
+     * @param groupId The ID of the RaftGroup
+     * @return The Division of this Server for a particular RaftGroup.
+     * @throws IOException
+     */
+    public RaftServer.Division getDivision(RaftGroupId groupId) throws IOException {
+        return this.raftServer.getDivision(groupId);
+    }
+
+    public List<RaftServer.Division> getAllDivisions() throws IOException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        return this.getStateMachineProviders().stream().map(stateMachineProvider -> {
+                RaftGroupId groupId = stateMachineProvider.getRaftGroupId(getServerName());
+            try {
+                return getDivision(groupId);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    /**
      * Returns a base raft group that does not correspond to any state machine.
      * It is only responsible to answer requests of the group management API
      * so we can add further groups after server is spawned.
@@ -131,6 +157,12 @@ public abstract class MultiRaftReplicationServer implements IReplicationServer.R
 
         RaftServerConfigKeys.setStorageDir(properties,
                 Collections.singletonList(getStorageDir()));
+
+        // RaftServerConfigKeys.setSleepDeviationThreshold();
+
+        // TODO not working, thus can not be tested
+//        RaftServerConfigKeys.Log.setUseMemory(properties,
+//                true);
 
         val port = NetUtils.createSocketAddr(currentPeer.getAddress()).getPort();
 
@@ -252,8 +284,10 @@ public abstract class MultiRaftReplicationServer implements IReplicationServer.R
     }
 
     public void start() throws IOException, ExecutionException, InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        LOG.info("Raft server started");
         raftServer.start();
+
+        isRunning = true;
+        LOG.info("Raft server started");
 
         // register default raft groups and those found in snapshots
         registerRaftGroups();
@@ -278,8 +312,16 @@ public abstract class MultiRaftReplicationServer implements IReplicationServer.R
 
     // TODO not only register in map of current peer, but in all peers
     private void broadcastRaftGroupInfo(String groupId, UUID groupUUID, String groupName, String stateMachineType, List<String> nodeIds) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
-        val replicatedMetaDataMap = ReplicatedMetadataMap.ofRaftGroupScope(metaDataClient);
-        var raftGroupsString = replicatedMetaDataMap.get("groups");
+        val groupRegistryDataMap = ReplicatedMetadataMap.ofRaftGroupRegistry(metaDataClient);
+        val groupMetaDataMap = ReplicatedMetadataMap.ofRaftGroupScope(groupId, metaDataClient);
+
+        String raftGroupsString;
+        try {
+            raftGroupsString = groupRegistryDataMap.get("groups");
+        } catch (NoSuchElementException e) {
+            raftGroupsString = null;
+        }
+
         if (raftGroupsString == null) raftGroupsString = "";
 
         val raftGroups = raftGroupsString.split(";");
@@ -287,15 +329,15 @@ public abstract class MultiRaftReplicationServer implements IReplicationServer.R
         raftGroupsSet.add(groupId);
         raftGroupsString = String.join(";", raftGroupsSet);
 
-        replicatedMetaDataMap.put("groups", raftGroupsString);
+        groupRegistryDataMap.put("groups", raftGroupsString);
 
         // add more info about raft group here
-        replicatedMetaDataMap.put(groupId + "-UUID", groupUUID.toString());
-        replicatedMetaDataMap.put(groupId + "-name", groupName);
-        replicatedMetaDataMap.put(groupId + "-server", getServerName());
-        replicatedMetaDataMap.put(groupId + "-sm-class", stateMachineType);
-        replicatedMetaDataMap.put(groupId + "-sm-name", stateMachineType);
-        replicatedMetaDataMap.put(groupId + "-nodes", String.join(";", nodeIds));
+        groupRegistryDataMap.put(groupId + "-UUID", groupUUID.toString());
+        groupMetaDataMap.put("UUID", groupUUID.toString());
+        groupMetaDataMap.put("name", groupName);
+        groupMetaDataMap.put("server", getServerName());
+        groupMetaDataMap.put("sm-class", stateMachineType);
+        groupMetaDataMap.put("sm-name", stateMachineType);
+        groupMetaDataMap.put("nodes", String.join(";", nodeIds));
     }
-
 }

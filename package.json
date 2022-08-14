@@ -30,7 +30,12 @@
     "carbon-components": "^10.41.0",
     "carbon-icons": "^7.0.7",
     "@carbon/icons-react": "^10.37.0",
-    "inflection": "^1.13.1"
+    "@fontsource/ibm-plex-sans": "^4.5.1",
+    "inflection": "^1.13.1",
+    "react-json-view": "^1.21.3",
+    "plotly.js": "^2.6.2",
+    "react-plotly.js": "^2.5.1",
+    "notistack": "latest-mui-v4"
   },
   "scripts": {
     "start": "react-scripts start",

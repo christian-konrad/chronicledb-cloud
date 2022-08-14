@@ -5,9 +5,9 @@ import MainLayout from "../layouts/mainLayout";
 import {Card, CardContent, Container} from "@material-ui/core";
 import SystemInfo from "../components/systemInfo";
 import ErrorBoundary from "../components/error/errorBoundary";
-import ReplicatedCounter from "../components/replicatedCounter";
+import ReplicatedCounter from "../components/counter/replicatedCounter";
 import {withStyles} from '@material-ui/core/styles';
-import ReplicatedCounters from "../components/replicatedCounters";
+import ReplicatedCounters from "../components/counter/replicatedCounters";
 import WorkInProgressPlaceholder from "../components/workInProgressPlaceholder";
 
 const useStyles = theme => ({

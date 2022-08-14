@@ -4,7 +4,7 @@ import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterManagementMultiRaftServer;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.ReplicatedMetadataMap;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata.ReplicatedMetadataMap;
 import lombok.val;
 import org.apache.ratis.client.RaftClient;
 import org.apache.ratis.client.api.GroupManagementApi;
@@ -12,6 +12,7 @@ import org.apache.ratis.conf.Parameters;
 import org.apache.ratis.conf.RaftProperties;
 import org.apache.ratis.grpc.GrpcFactory;
 import org.apache.ratis.protocol.*;
+import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.ratis.thirdparty.io.grpc.StatusRuntimeException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -43,7 +44,7 @@ public class RaftSystemInfoClient {
     private RaftClient buildAppLogicRaftClient() {
         RaftGroupId raftGroupId = RaftGroupId.valueOf(getRaftGroupUUID());
         String host = raftConfig.getHostAddress();
-        val peer = RaftPeer.newBuilder().setId(raftConfig.getCurrentPeerId()).setAddress(host + ":" + raftConfig.getReplicationPort()).build();
+        val peer = RaftPeer.newBuilder().setId(raftConfig.getCurrentPeerId()).setAddress(host + ":" + raftConfig.getMetadataPort()).build();
         RaftGroup raftGroup =  RaftGroup.valueOf(raftGroupId, peer);
 
         RaftProperties raftProperties = new RaftProperties();
@@ -64,8 +65,13 @@ public class RaftSystemInfoClient {
         // TODO iterate over all peers
         // TODO should have list of all available peers in replicatedMetaDataMap, too
         // as it can change over time due to config changes
-        val replicatedMetaDataMap = ReplicatedMetadataMap.ofRaftGroupScope(metaDataClient);
-        val raftGroupsString = replicatedMetaDataMap.get("groups");
+        val replicatedMetaDataMap = ReplicatedMetadataMap.ofRaftGroupRegistry(metaDataClient);
+        String raftGroupsString;
+        try {
+            raftGroupsString = replicatedMetaDataMap.get("groups");
+        } catch (NoSuchElementException e) {
+            raftGroupsString = null;
+        }
 
         if (raftGroupsString == null) {
             val groupManagementApi = metaDataClient.getGroupManagementApi();
@@ -85,9 +91,15 @@ public class RaftSystemInfoClient {
                 .collect(Collectors.toList());
     }
 
+    public RaftGroupId getRaftGroupIdFromString(String raftGroupId) throws InvalidProtocolBufferException, ExecutionException, InterruptedException {
+        val replicatedMetaDataMap = ReplicatedMetadataMap.ofRaftGroupRegistry(metaDataClient);
+        val raftGroupUUID = replicatedMetaDataMap.get(raftGroupId + "-UUID");
+        return RaftGroupId.valueOf(UUID.fromString(raftGroupUUID));
+    }
+
     public RaftGroupInfo getRaftGroupInfo(RaftGroupId raftGroupId) throws IOException, ExecutionException, InterruptedException {
-        val replicatedMetaDataMap = ReplicatedMetadataMap.ofRaftGroupScope(metaDataClient);
-        val raftServerName = replicatedMetaDataMap.get(raftGroupId.toString() + "-server");
+        val replicatedMetaDataMap = ReplicatedMetadataMap.ofRaftGroupScope(raftGroupId, metaDataClient);
+        val raftServerName = replicatedMetaDataMap.get("server");
 
         GroupManagementApi groupManagementApi;
 
@@ -98,10 +110,9 @@ public class RaftSystemInfoClient {
         }
 
         try {
-            val raftGroupName = replicatedMetaDataMap.get(raftGroupId + "-name");
-            val stateMachineType = replicatedMetaDataMap.get(raftGroupId + "-sm-class");
-            val serverName = replicatedMetaDataMap.get(raftGroupId + "-server");
-            return RaftGroupInfo.of(groupManagementApi.info(raftGroupId), raftGroupName, stateMachineType, serverName);
+            val raftGroupName = replicatedMetaDataMap.get("name");
+            val stateMachineType = replicatedMetaDataMap.get("sm-class");
+            return RaftGroupInfo.of(groupManagementApi.info(raftGroupId), raftGroupName, stateMachineType, raftServerName);
         } catch (StatusRuntimeException e) {
             e.printStackTrace();
             return null;

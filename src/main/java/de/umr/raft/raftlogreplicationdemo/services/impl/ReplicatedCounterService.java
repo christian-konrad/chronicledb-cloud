@@ -1,6 +1,5 @@
 package de.umr.raft.raftlogreplicationdemo.services.impl;
 
-import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.models.counter.CreateCounterRequest;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.CounterOperationResultProto;
@@ -12,26 +11,22 @@ import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.Counter
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.CounterStateMachineProvider;
 import de.umr.raft.raftlogreplicationdemo.services.ICounterService;
 import de.umr.raft.raftlogreplicationdemo.services.ReplicatedService;
-import de.umr.raft.raftlogreplicationdemo.services.sysinfo.SystemInfoService;
+import de.umr.raft.raftlogreplicationdemo.services.impl.sysinfo.SystemInfoService;
+import de.umr.raft.raftlogreplicationdemo.util.RaftGroupUtil;
 import lombok.val;
-import org.apache.ratis.protocol.Message;
-import org.apache.ratis.protocol.RaftClientReply;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.Charset;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
-@Service
+//@Service
 public class ReplicatedCounterService extends ReplicatedService implements ICounterService {
 
     @Autowired
@@ -40,13 +35,18 @@ public class ReplicatedCounterService extends ReplicatedService implements ICoun
     @Autowired
     SystemInfoService systemInfoService;
 
+    /**
+     * Obtains a client from the registry or creates a new one if missing
+     */
     private CounterReplicationClient createClientForCounterId(String counterId) {
-        return new CounterReplicationClient(raftConfig, counterId);
+        return CounterReplicationClient.of(raftConfig, counterId);
     }
 
     private CompletableFuture<Integer> sendAndExecuteOperationMessage(String counterId, CounterOperationMessage operationMessage) {
         return wrapInCompletableFuture(() -> {
-            val result = createClientForCounterId(counterId).sendAndExecuteOperationMessage(
+            val client = createClientForCounterId(counterId);
+
+            val result = client.sendAndExecuteOperationMessage(
                     operationMessage,
                     CounterOperationResultProto.parser());
 
@@ -56,7 +56,7 @@ public class ReplicatedCounterService extends ReplicatedService implements ICoun
             }
 
             return result.getCounterValue();
-        });
+        }, counterId);
     }
 
     @Override
@@ -64,14 +64,8 @@ public class ReplicatedCounterService extends ReplicatedService implements ICoun
         // TODO this is something that must be done by clusterManagementStateMachine via client
         return wrapInCompletableFuture(() -> {
             val raftGroups = systemInfoService.getRaftGroups();
-            val counterRaftGroups = raftGroups.stream().filter(raftGroupInfo -> {
-                val stateMachineClass = raftGroupInfo.getStateMachineClass();
-                val counterStateMachineClassName = CounterStateMachine.class.getCanonicalName();
-                return stateMachineClass.equals(counterStateMachineClassName);
-            }).collect(Collectors.toList());
-            val counterIds = counterRaftGroups.stream().map(raftGroupInfo ->
-                    raftGroupInfo.getName().replace(String.format("%s:", raftGroupInfo.getServerName()), "")
-            ).collect(Collectors.toList());
+            val eventStoreRaftGroups = RaftGroupUtil.filterRaftGroupsByStateMachine(raftGroups, CounterStateMachine.class);
+            val counterIds = RaftGroupUtil.getPartitionNamesFromRaftGroupInfos(eventStoreRaftGroups);
             return counterIds;
         });
     }

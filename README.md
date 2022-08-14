@@ -1,27 +1,48 @@
-> ⚠ TODO restructure package; have all statemachine impls in their own packages
+# ChronicleDB on a Raft
 
-# Cluster Startup
+---
 
-For development, 
+## Build
+
+```
+mvn clean
+mvn frontend:yarn
+mvn frontend:webpack
+mnv package
+```
+
+### Compile protos after change
+
+```
+mvn clean
+mnv package
+```
+
+Package may fail as generated java classes change after protos are compiled,
+but they should be indexed by the IDE regardless.
+
+## Configuration
+
+Either via the `application.properties` or run arguments.
+
+## Cluster Startup
 
 ```shell
 PEERS=n1:localhost:6000,n2:localhost:6001,n3:localhost:6002
 ID=n0
 HTTP_PORT=8080
 META_PORT=6000
-RAFT_PORT=6050
 
 ./mvnw spring-boot:run -Dspring-boot.run.arguments="\
 --node-id={ID} \
 --server.address=localhost \
 --server.port={HTTP_PORT} \
 --metadata-port={META_PORT} \
---replication-port={RAFT_PORT} \
 --storage=/tmp/raft-demo/{ID} \
 --peers={PEERS}"
 ```
 
-### Example
+#### Example
 
 ```shell
 ./mvnw spring-boot:run -Dspring-boot.run.arguments="\
@@ -34,7 +55,7 @@ RAFT_PORT=6050
 --peers=n0:localhost:6000,n1:localhost:6001,n2:localhost:6002"
 ```
 
-## From JAR
+### From JAR
 
 ```shell
 java -jar target/raft-log-replication-demo-0.0.1-SNAPSHOT.jar \
@@ -42,12 +63,11 @@ java -jar target/raft-log-replication-demo-0.0.1-SNAPSHOT.jar \
 --server.address=localhost \
 --server.port={HTTP_PORT} \
 --metadata-port={META_PORT} \
---replication-port={RAFT_PORT} \
 --storage=/tmp/raft-demo/{ID} \
 --peers={PEERS}"
 ```
 
-### Example Cluster
+#### Example Cluster
 
 ```shell
 PEERS=n1:localhost:6000,n2:localhost:6001,n3:localhost:6002
@@ -58,7 +78,6 @@ java -jar target/raft-log-replication-demo-0.0.1-SNAPSHOT.jar \
 --server.address=localhost \
 --server.port=8080 \
 --metadata-port=6000 \
---replication-port=6050 \
 --storage=/tmp/raft-demo/${ID} \
 --peers=${PEERS}
 
@@ -68,7 +87,6 @@ java -jar target/raft-log-replication-demo-0.0.1-SNAPSHOT.jar \
 --server.address=localhost \
 --server.port=8081 \
 --metadata-port=6001 \
---replication-port=6051 \
 --storage=/tmp/raft-demo/${ID} \
 --peers=${PEERS}
 
@@ -78,64 +96,18 @@ java -jar target/raft-log-replication-demo-0.0.1-SNAPSHOT.jar \
 --server.address=localhost \
 --server.port=8082 \
 --metadata-port=6002 \
---replication-port=6052 \
 --storage=/tmp/raft-demo/${ID} \
 --peers=${PEERS}
 ```
 
-# Docker
+## Docker
 
-## Build
-Maven build first, then
-```shell
-docker build --tag=raft-log-replication-demo:latest .
-```
+See the docker-compose as well as the Dockerfile.
 
-```shell
-docker run -p {HTTP_PORT}:{HTTP_PORT} raft-log-replication-demo \
---node-id={ID} \
---server.address=localhost \
---server.port={HTTP_PORT} \
---metadata-port={META_PORT} \
---replication-port={RAFT_PORT} \
---storage=/tmp/raft-demo/{ID} \
---peers={PEERS}
-```
+## Roadmap
 
-### Example Cluster
+### Make a library out of the Apache Ratis on-top abstractions
+One sub-goal is to create a standalone, high-level abstraction of Apache Ratis to enable developers to build high available applications with strong consistent replication in record time.
 
-TODO docker-compose!
-
-```shell
-PEERS=n1:localhost:6000,n2:localhost:6001,n3:localhost:6002
-
-ID=n1
-docker run -p 8080:8080 raft-log-replication-demo \
---node-id=${ID} \
---server.address=localhost \
---server.port=8080 \
---metadata-port=6000 \
---replication-port=6050 \
---storage=/tmp/raft-demo/${ID} \
---peers={PEERS}
-
-ID=n2
-docker run -p 8080:8080 raft-log-replication-demo \
---node-id=${ID} \
---server.address=localhost \
---server.port=8081 \
---metadata-port=6001 \
---replication-port=6051 \
---storage=/tmp/raft-demo/${ID} \
---peers=${PEERS}
-
-ID=n3
-docker run -p 8080:8080 raft-log-replication-demo \
---node-id=${ID} \
---server.address=localhost \
---server.port=8082 \
---metadata-port=6002 \
---replication-port=6052 \
---storage=/tmp/raft-demo/${ID} \
---peers=${PEERS}
-```
+### Test coverage
+There is currently little to no test coverage. We want everything to be tested.

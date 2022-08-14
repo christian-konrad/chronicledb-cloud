@@ -1,7 +1,8 @@
 version: '3'
 
-# TODO port defaults in .properties so we do not need them here
 # TODO make server address obsolete: if not specified, use node-id
+
+# TODO may use string interpolation to insert service id into the commands?
 
 services:
   n1:
@@ -9,9 +10,9 @@ services:
       context: ./
       dockerfile: Dockerfile
     image: raft-log-replication-demo:latest
-    command: --node-id=n1 --server.address=n1 --server.port=9999 --metadata-port=6000 --replication-port=6050 --storage=/tmp/raft-demo --peers=n1:9999,n2:9999,n3:9999
+    command: --node-id=n1 --server.address=n1 --storage=/raft-demo --peers=n1:9999,n2:9999,n3:9999
     ports:
-     - 8080:9999
+     - "8080:8000"
     #env_file: # TODO
       #  - ./.env
   n2:
@@ -19,14 +20,14 @@ services:
       context: ./
       dockerfile: Dockerfile
     image: raft-log-replication-demo:latest
-    command: --node-id=n2 --server.address=n2 --server.port=9999 --metadata-port=6000 --replication-port=6050 --storage=/tmp/raft-demo --peers=n1:9999,n2:9999,n3:9999
+    command: --node-id=n2 --server.address=n2 --storage=/raft-demo --peers=n1:9999,n2:9999,n3:9999
     ports:
-      - 8081:9999
+      - "8081:8000"
   n3:
     build:
       context: ./
       dockerfile: Dockerfile
     image: raft-log-replication-demo:latest
-    command: --node-id=n3 --server.address=n3 --server.port=9999 --metadata-port=6000 --replication-port=6050 --storage=/tmp/raft-demo --peers=n1:9999,n2:9999,n3:9999
+    command: --node-id=n3 --server.address=n3 --storage=/raft-demo --peers=n1:9999,n2:9999,n3:9999
     ports:
-      - 8082:9999
+      - "8082:8000"

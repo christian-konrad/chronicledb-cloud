@@ -48,6 +48,10 @@ class SystemInfo extends Component {
     }
 
     render() {
+        // TODO render connection status here
+        // TODO render notifications if server notifies of disconnected nodes
+        // TODO to do so simply (without actual messaging), have a poll service in sysinfo service "clusterhealth"
+
         if (!this.state.systemInfo) return <Skeleton />
 
         const { classes } = this.props;
@@ -59,7 +63,7 @@ class SystemInfo extends Component {
                     <InfoListItem classes={classes} label="Current node id" content={currentNodeId} />
                     <InfoListItem classes={classes} label="Current node storage path" content={currentNodeStoragePath} />
                 </List>
-                <NodeList nodeInfos={nodes} classes={classes} title="Total cluster nodes" />
+                <NodeList nodeInfos={nodes} title="Total cluster nodes" />
             </>
         )
     }

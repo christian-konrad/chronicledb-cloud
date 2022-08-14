@@ -1,5 +1,7 @@
 package de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers;
 
+import de.umr.raft.raftlogreplicationdemo.replication.api.PartitionInfo;
+import de.umr.raft.raftlogreplicationdemo.replication.api.PartitionName;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +41,11 @@ public class StateMachineProvider<StateMachine extends BaseStateMachine> {
         return RaftGroup.valueOf(raftGroupConfig.getRaftGroupId(serverName), raftGroupConfig.getPeers());
     }
 
+    public PartitionInfo createPartitionInfo(String serverName) {
+        // TODO check if is full qualified classname
+        return PartitionInfo.of(raftGroupConfig.getPartitionName(serverName), createRaftGroup(serverName), stateMachineConstructor.getName());
+    }
+
     public RaftGroupId getRaftGroupId(String serverName) {
         return raftGroupConfig.getRaftGroupId(serverName);
     }
@@ -62,8 +69,12 @@ public class StateMachineProvider<StateMachine extends BaseStateMachine> {
 //        }
 
         public String getDisplayName(String serverName) {
-                return String.format("%s:%s", serverName, groupName);
-            }
+            return String.format("%s:%s", serverName, groupName);
+        }
+
+        public PartitionName getPartitionName(String serverName) {
+            return PartitionName.of(serverName, groupName);
+        }
 
         public UUID getRaftGroupUUID(String serverName) {
             return UUID.nameUUIDFromBytes(getDisplayName(serverName).getBytes(StandardCharsets.UTF_8));

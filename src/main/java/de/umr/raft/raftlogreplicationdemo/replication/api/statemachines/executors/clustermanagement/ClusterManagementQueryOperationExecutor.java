@@ -1,0 +1,7 @@
+package de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.clustermanagement;
+
+import de.umr.raft.raftlogreplicationdemo.replication.api.proto.ClusterManagementOperationResultProto;
+import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.QueryOperationExecutor;
+
+public interface ClusterManagementQueryOperationExecutor extends ClusterManagementOperationExecutor<ClusterManagementOperationResultProto>, QueryOperationExecutor {
+}

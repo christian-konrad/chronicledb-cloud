@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { MainAppBar, MainDrawer } from '../components';
+import { MainAppBar, MainDrawer } from '../components/nav';
 import { makeStyles } from '@material-ui/core/styles';
 
 import CssBaseline from '@material-ui/core/CssBaseline';

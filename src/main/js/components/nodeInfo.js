@@ -4,8 +4,6 @@ import Skeleton from '@material-ui/lab/Skeleton';
 import {List, ListItem, ListItemText, Typography} from "@material-ui/core";
 import {withStyles} from '@material-ui/core/styles';
 import inflection from 'inflection';
-import NodeList from "./nodeList";
-import Link from "carbon-components-react/lib/components/UIShell/Link";
 
 const useStyles = theme => ({
     listItem: {
@@ -84,8 +82,8 @@ class NodeInfo extends Component {
         if (!this.state.nodeInfo) return <Skeleton />
 
         const { classes } = this.props;
-        const { id, host, httpPort, metadataPort, replicationPort, storagePath,
-            localHostAddress, localHostName, remoteHostAddress, remoteHostName,
+        const { id, host, httpPort, metadataPort, storagePath,
+            localHostAddress, localHostName, remoteHostAddress,
             osName, osVersion,
             javaVersion, jdkVersion, springVersion,
             totalDiskSpace, usableDiskSpace,
@@ -93,9 +91,8 @@ class NodeInfo extends Component {
 
         const httpAddress = `${host}:${httpPort}`;
         // TODO should use https
-        const httpAdminAddress = `http://${remoteHostName}:${httpPort}/admin`;
+        const httpAdminAddress = `http://${remoteHostAddress}:${httpPort}/admin`;
         const metadataAddress = `${host}:${metadataPort}`;
-        const replicationAddress = `${host}:${replicationPort}`;
 
         const formatBytes = (bytes, decimals = 2) => {
             if (bytes === 0) return '0 Bytes';
@@ -147,14 +144,12 @@ class NodeInfo extends Component {
                     } />
                     <InfoListItem classes={classes} label="Last heartbeat before" content={formattedHeartbeatBefore} />
                     <InfoListItem classes={classes} label="HTTP address" content={httpAddress} />
-                    <InfoListItem classes={classes} label="Metadata RPC address" content={metadataAddress} />
-                    <InfoListItem classes={classes} label="Replication RPC address" content={replicationAddress} />
+                    <InfoListItem classes={classes} label="Replication RPC address" content={metadataAddress} />
                     <InfoListItem classes={classes} label="Management web console" content={<a href={httpAdminAddress}>{httpAdminAddress}</a>} />
                     <InfoListItem classes={classes} label="Storage path" content={storagePath} />
                     <InfoListItem classes={classes} label="Local host address" content={localHostAddress} />
                     <InfoListItem classes={classes} label="Local host name" content={localHostName} />
                     <InfoListItem classes={classes} label="Remote host address" content={remoteHostAddress} />
-                    <InfoListItem classes={classes} label="Remote host name" content={remoteHostName} />
                     <InfoListItem classes={classes} label="OS name" content={osName} />
                     <InfoListItem classes={classes} label="OS version" content={osVersion} />
                     <InfoListItem classes={classes} label="Java version" content={javaVersion} />

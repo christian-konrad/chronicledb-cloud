@@ -1,6 +1,6 @@
 package de.umr.raft.raftlogreplicationdemo.models.sysinfo;
 
-import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.ReplicatedMetadataMap;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata.ReplicatedMetadataMap;
 import lombok.*;
 import org.apache.ratis.protocol.RaftPeer;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
@@ -16,12 +16,10 @@ public class NodeInfo {
     @Getter @NonNull private final String host;
     @Getter private final String httpPort;
     @Getter @NonNull private final String metadataPort;
-    @Getter private final String replicationPort;
     @Getter private final String storagePath;
     @Getter private final String localHostAddress;
     @Getter private final String localHostName;
     @Getter private final String remoteHostAddress;
-    @Getter private final String remoteHostName;
     @Getter private final String osName;
     @Getter private final String osVersion;
     @Getter private final String springVersion;
@@ -47,11 +45,9 @@ public class NodeInfo {
         val localHostAddress = replicatedMetaDataMap.get("localHostAddress");
         val httpPort = replicatedMetaDataMap.get("httpPort");
         val metadataPort = replicatedMetaDataMap.get("metadataPort");
-        val replicationPort = replicatedMetaDataMap.get("replicationPort");
         val storagePath = replicatedMetaDataMap.get("storagePath");
         val localHostName = replicatedMetaDataMap.get("localHostName");
         val remoteHostAddress = replicatedMetaDataMap.get("remoteHostAddress");
-        val remoteHostName = replicatedMetaDataMap.get("remoteHostName");
         val osName = replicatedMetaDataMap.get("osName");
         val osVersion = replicatedMetaDataMap.get("osVersion");
         val springVersion = replicatedMetaDataMap.get("springVersion");
@@ -67,12 +63,10 @@ public class NodeInfo {
                 .host(localHostAddress)
                 .httpPort(httpPort)
                 .metadataPort(metadataPort)
-                .replicationPort(replicationPort)
                 .storagePath(storagePath)
                 .localHostAddress(localHostAddress)
                 .localHostName(localHostName)
                 .remoteHostAddress(remoteHostAddress)
-                .remoteHostName(remoteHostName)
                 .osName(osName)
                 .osVersion(osVersion)
                 .springVersion(springVersion)

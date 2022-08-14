@@ -2,7 +2,7 @@ package de.umr.raft.raftlogreplicationdemo.replication.runners;
 
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.ReplicatedMetadataMap;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata.ReplicatedMetadataMap;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.ratis.util.NetUtils;
@@ -24,7 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.NumberFormat;
 
-@Component
+//@Component
 @RequiredArgsConstructor(staticName = "of")
 public class MetadataUpdateStartupRunner implements ApplicationRunner {
 
@@ -50,14 +50,12 @@ public class MetadataUpdateStartupRunner implements ApplicationRunner {
         replicatedMetaDataMap.put("nodeId", raftConfig.getCurrentPeerId());
         replicatedMetaDataMap.put("storagePath", raftConfig.getStoragePath());
         replicatedMetaDataMap.put("metadataPort", String.valueOf(currentPeerPort));
-        replicatedMetaDataMap.put("replicationPort", String.valueOf(raftConfig.getReplicationPort()));
 
         replicatedMetaDataMap.put("httpPort", raftConfig.getHttpPort());
         replicatedMetaDataMap.put("localHostAddress", InetAddress.getLocalHost().getHostAddress());
         replicatedMetaDataMap.put("localHostName", InetAddress.getLocalHost().getHostName());
 
-        replicatedMetaDataMap.put("remoteHostAddress", InetAddress.getLoopbackAddress().getHostAddress());
-        replicatedMetaDataMap.put("remoteHostName", InetAddress.getLoopbackAddress().getHostName());
+        replicatedMetaDataMap.put("remoteHostAddress", raftConfig.getPublicHostAddress());
 
         replicatedMetaDataMap.put("osName", System.getProperty("os.name"));
         replicatedMetaDataMap.put("osVersion", System.getProperty("os.version"));
