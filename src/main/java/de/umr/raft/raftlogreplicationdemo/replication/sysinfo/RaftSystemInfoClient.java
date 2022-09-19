@@ -2,7 +2,9 @@ package de.umr.raft.raftlogreplicationdemo.replication.sysinfo;
 
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.ApplicationLogicServer;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterManagementMultiRaftServer;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterManagementServer;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata.ReplicatedMetadataMap;
 import lombok.val;
@@ -44,7 +46,7 @@ public class RaftSystemInfoClient {
     private RaftClient buildAppLogicRaftClient() {
         RaftGroupId raftGroupId = RaftGroupId.valueOf(getRaftGroupUUID());
         String host = raftConfig.getHostAddress();
-        val peer = RaftPeer.newBuilder().setId(raftConfig.getCurrentPeerId()).setAddress(host + ":" + raftConfig.getMetadataPort()).build();
+        val peer = RaftPeer.newBuilder().setId(raftConfig.getCurrentPeerId()).setAddress(host + ":" + raftConfig.getReplicationPort()).build();
         RaftGroup raftGroup =  RaftGroup.valueOf(raftGroupId, peer);
 
         RaftProperties raftProperties = new RaftProperties();
@@ -97,13 +99,13 @@ public class RaftSystemInfoClient {
         return RaftGroupId.valueOf(UUID.fromString(raftGroupUUID));
     }
 
-    public RaftGroupInfo getRaftGroupInfo(RaftGroupId raftGroupId) throws IOException, ExecutionException, InterruptedException {
+    public RaftGroupInfo getRaftGroupInfo(RaftGroupId raftGroupId) throws IOException, ExecutionException, InterruptedException, NoSuchElementException {
         val replicatedMetaDataMap = ReplicatedMetadataMap.ofRaftGroupScope(raftGroupId, metaDataClient);
         val raftServerName = replicatedMetaDataMap.get("server");
 
         GroupManagementApi groupManagementApi;
 
-        if (ClusterManagementMultiRaftServer.SERVER_NAME.equals(raftServerName)) {
+        if (ClusterManagementServer.SERVER_NAME.equals(raftServerName)) {
             groupManagementApi = metaDataClient.getGroupManagementApi();
         } else {
             groupManagementApi = appLogicRaftClient.getGroupManagementApi(appLogicRaftClient.getLeaderId());

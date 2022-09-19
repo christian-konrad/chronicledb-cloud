@@ -22,6 +22,8 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
+// TODO start again once cluster management works
+
 @Service
 public class MeasureEventStorePerformanceService extends MeasurePerformanceService {
 

@@ -32,12 +32,14 @@ PEERS=n1:localhost:6000,n2:localhost:6001,n3:localhost:6002
 ID=n0
 HTTP_PORT=8080
 META_PORT=6000
+REPLICATION_PORT=6050
 
 ./mvnw spring-boot:run -Dspring-boot.run.arguments="\
 --node-id={ID} \
 --server.address=localhost \
 --server.port={HTTP_PORT} \
 --metadata-port={META_PORT} \
+--replication-port={REPLICATION_PORT} \
 --storage=/tmp/raft-demo/{ID} \
 --peers={PEERS}"
 ```
@@ -63,6 +65,7 @@ java -jar target/raft-log-replication-demo-0.0.1-SNAPSHOT.jar \
 --server.address=localhost \
 --server.port={HTTP_PORT} \
 --metadata-port={META_PORT} \
+--replication-port={REPLICATION_PORT} \
 --storage=/tmp/raft-demo/{ID} \
 --peers={PEERS}"
 ```
@@ -78,6 +81,7 @@ java -jar target/raft-log-replication-demo-0.0.1-SNAPSHOT.jar \
 --server.address=localhost \
 --server.port=8080 \
 --metadata-port=6000 \
+--replication-port=6050 \
 --storage=/tmp/raft-demo/${ID} \
 --peers=${PEERS}
 
@@ -87,6 +91,7 @@ java -jar target/raft-log-replication-demo-0.0.1-SNAPSHOT.jar \
 --server.address=localhost \
 --server.port=8081 \
 --metadata-port=6001 \
+--replication-port=6051 \
 --storage=/tmp/raft-demo/${ID} \
 --peers=${PEERS}
 
@@ -96,6 +101,7 @@ java -jar target/raft-log-replication-demo-0.0.1-SNAPSHOT.jar \
 --server.address=localhost \
 --server.port=8082 \
 --metadata-port=6002 \
+--replication-port=6052 \
 --storage=/tmp/raft-demo/${ID} \
 --peers=${PEERS}
 ```
@@ -103,6 +109,51 @@ java -jar target/raft-log-replication-demo-0.0.1-SNAPSHOT.jar \
 ## Docker
 
 See the docker-compose as well as the Dockerfile.
+
+## Provisioning a partition
+
+In general, a new partition of any state machine (any that implements the `StateMachine` interface) can be instantiated using the REST API:
+
+```sh
+POST http://localhost:8080/api/cluster-manager/partitions
+Content-Type: application/json
+
+{
+  "stateMachineClassName": "de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.EventStoreStateMachine",
+  "partitionName": "events",
+  "replicationFactor": 3
+}
+```
+
+For event stores, there is a convenience method to instantiate a new stream on its own partition:
+
+```sh
+POST http://localhost:8080/api/event-store/streams
+Content-Type: application/json
+
+{
+  "streamName": "demo-event-store",
+  "schema": [
+    {
+      "name": "SYMBOL",
+      "type": "STRING",
+      "properties": {}
+    },
+    {
+      "name": "SECURITYTYPE",
+      "type": "INTEGER",
+      "properties": {}
+    },
+    {
+      "name": "LASTTRADEPRICE",
+      "type": "FLOAT",
+      "properties": {}
+    }
+  ]
+}
+```
+
+> Note that the schema is currently ignored, since it is hardcoded. The implementation of the dynamic schema invocation is currently pending.
 
 ## Roadmap
 

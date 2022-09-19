@@ -23,7 +23,7 @@ public class PartitionInfo {
     @Getter @NonNull final String stateMachineClassname;
     @Getter @Setter PartitionState partitionState = PartitionState.UNKNOWN;
 
-    enum PartitionState {
+    public enum PartitionState {
         UNKNOWN, REGISTERING, REGISTERED, DETACHED
     }
 
@@ -44,6 +44,21 @@ public class PartitionInfo {
                 stateMachineClassname);
 
         partitionInfo.setPartitionState(PartitionState.valueOf(partitionInfoProto.getPartitionState().name()));
+
+        return partitionInfo;
+    }
+
+    public static PartitionInfo of(PartitionInfoProto partitionInfoProto) {
+        return PartitionInfo.of(partitionInfoProto, partitionInfoProto.getPartitionName().getStateMachineClassName());
+    }
+
+    public static PartitionInfo of(PartitionName partitionName, RaftGroup raftGroup, String stateMachineClassname, PartitionState state) {
+        var partitionInfo = PartitionInfo.of(
+                partitionName,
+                raftGroup,
+                stateMachineClassname);
+
+        partitionInfo.setPartitionState(state);
 
         return partitionInfo;
     }

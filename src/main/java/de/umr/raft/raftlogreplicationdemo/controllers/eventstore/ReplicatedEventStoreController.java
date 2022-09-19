@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
+// TODO start again once cluster management works
+
 @RestController
 @RequestMapping("/api/event-store")
 public class ReplicatedEventStoreController {

@@ -82,17 +82,18 @@ class NodeInfo extends Component {
         if (!this.state.nodeInfo) return <Skeleton />
 
         const { classes } = this.props;
-        const { id, host, httpPort, metadataPort, storagePath,
-            localHostAddress, localHostName, remoteHostAddress,
-            osName, osVersion,
+        const { id, host, httpPort, metadataPort, replicationPort,
+            storagePath, localHostAddress, localHostName,
+            remoteHostAddress, osName, osVersion,
             javaVersion, jdkVersion, springVersion,
             totalDiskSpace, usableDiskSpace,
-            heartbeat } = this.state.nodeInfo;
+            heartbeat, health } = this.state.nodeInfo;
 
         const httpAddress = `${host}:${httpPort}`;
         // TODO should use https
         const httpAdminAddress = `http://${remoteHostAddress}:${httpPort}/admin`;
         const metadataAddress = `${host}:${metadataPort}`;
+        const replicationAddress = `${host}:${replicationPort}`;
 
         const formatBytes = (bytes, decimals = 2) => {
             if (bytes === 0) return '0 Bytes';
@@ -125,12 +126,12 @@ class NodeInfo extends Component {
         // TODO also show on front page
         // TODO mark as red if > 30 sek, orange > 15 sec
         // TODO row "status" with connected, interrupted, disconnected
-        const heartbeatBefore = (Date.now() - parseInt(heartbeat)) / 1000;
+        const heartbeatBefore = (Date.now() - new Date(heartbeat).getTime()) / 1000;
 
-        // TODO make configurable or get status info from server
-        const status = heartbeatBefore > 30 ? 'disconnected'
+        /*const status = heartbeatBefore > 30 ? 'disconnected'
             : heartbeatBefore > 10 ? 'interrupted'
-                : 'connected';
+                : 'connected';*/
+        const status = health;
         const formattedStatus = inflection.capitalize(status);
         const formattedHeartbeatBefore = `~ ${heartbeatBefore.toFixed(0)} s`;
 
@@ -140,11 +141,12 @@ class NodeInfo extends Component {
                 <List>
                     <InfoListItem classes={classes} label="Node id" content={id} />
                     <InfoListItem classes={classes} label="Connection status" content={
-                        <div style={{display: 'flex'}}><div className={classes.connectionStateIndicator} data-status={status} />{formattedStatus}</div>
+                        <div style={{display: 'flex'}}><div className={classes.connectionStateIndicator} data-status={status.toLowerCase()} />{formattedStatus}</div>
                     } />
                     <InfoListItem classes={classes} label="Last heartbeat before" content={formattedHeartbeatBefore} />
                     <InfoListItem classes={classes} label="HTTP address" content={httpAddress} />
-                    <InfoListItem classes={classes} label="Replication RPC address" content={metadataAddress} />
+                    <InfoListItem classes={classes} label="Cluster management RPC address" content={metadataAddress} />
+                    <InfoListItem classes={classes} label="Replication RPC address" content={replicationAddress} />
                     <InfoListItem classes={classes} label="Management web console" content={<a href={httpAdminAddress}>{httpAdminAddress}</a>} />
                     <InfoListItem classes={classes} label="Storage path" content={storagePath} />
                     <InfoListItem classes={classes} label="Local host address" content={localHostAddress} />

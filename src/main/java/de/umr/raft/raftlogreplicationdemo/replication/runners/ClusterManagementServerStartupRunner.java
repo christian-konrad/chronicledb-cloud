@@ -11,7 +11,8 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.InvocationTargetException;
 
-@Component
+//@Component
+@Deprecated
 public class ClusterManagementServerStartupRunner implements ApplicationRunner {
 
     protected static final Logger LOG =

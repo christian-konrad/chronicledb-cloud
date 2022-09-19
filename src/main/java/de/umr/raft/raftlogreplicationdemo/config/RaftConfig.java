@@ -35,14 +35,14 @@ public class RaftConfig {
     @Value("${storage}")
     @Getter private String storagePath;
 
-    @Value("${server.port}:8000")
+    @Value("${server.port:8000}")
     @Getter private String httpPort;
 
-    // TODO actually, THIS is replication-port. Need also seperate, explicit port for management group
-    @Value("${metadata-port}:6000")
-    @Getter private String metadataPort;
-    // or name managementPort and replicationPort ?
-    // TODO need some kind of port proxy
+    @Value("${metadata-port:6000}")
+    @Getter private String managementPort;
+
+    @Value("${replication-port:6050}")
+    @Getter private String replicationPort;
 
     @Value("${server.address:#{null}}")
     private Optional<String> host;
@@ -127,5 +127,9 @@ public class RaftConfig {
 
     public String getPublicHostAddress() {
         return publicHost.orElseGet(this::getHostAddress);
+    }
+
+    public String getReplicationAddress() {
+        return getHostAddress() + ":" + getReplicationPort();
     }
 }

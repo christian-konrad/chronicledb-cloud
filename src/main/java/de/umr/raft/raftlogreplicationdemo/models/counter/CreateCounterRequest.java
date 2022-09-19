@@ -9,5 +9,5 @@ import lombok.RequiredArgsConstructor;
 public class CreateCounterRequest implements CreatePartitionRequest {
 
     @Getter @NonNull final String id;
-    @Getter final long partitionsCount;
+    @Getter final int partitionsCount;
 }

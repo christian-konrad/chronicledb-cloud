@@ -6,8 +6,10 @@ import de.umr.jepc.v2.api.epa.EPA;
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.models.eventstore.QueryRequest;
 import de.umr.raft.raftlogreplicationdemo.models.eventstore.QueryResponse;
+import de.umr.raft.raftlogreplicationdemo.replication.api.PartitionInfo;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.EventStoreReplicationClient;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.clustermanagement.ClusterManager;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.EventStoreStateMachine;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.event.StreamInfo;
 import de.umr.raft.raftlogreplicationdemo.services.impl.sysinfo.SystemInfoService;
@@ -21,6 +23,9 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+
+// TODO start again once cluster management works
 
 @Component
 public class ReplicatedChronicleEngine extends BaseChronicleEngine<BufferedReplicatedEventStore> {
@@ -31,33 +36,51 @@ public class ReplicatedChronicleEngine extends BaseChronicleEngine<BufferedRepli
 
     // TODO actual ClusterManagementReplicationClient to spawn new streams
     private final ClusterMetadataReplicationClient metadataClient;
-    private final SystemInfoService systemInfoService;
+    //private final SystemInfoService systemInfoService;
+    private final ClusterManager clusterManager;
     private final RaftConfig raftConfig;
 
     @Autowired
-    public ReplicatedChronicleEngine(ClusterMetadataReplicationClient metadataClient, SystemInfoService systemInfoService, RaftConfig raftConfig) throws IOException, ExecutionException, InterruptedException {
+    public ReplicatedChronicleEngine(ClusterMetadataReplicationClient metadataClient, SystemInfoService systemInfoService, ClusterManager clusterManager, RaftConfig raftConfig) throws IOException, ExecutionException, InterruptedException {
         super();
 
         LOG.info("Starting ReplicatedChronicleEngine");
 
         this.metadataClient = metadataClient;
-        this.systemInfoService = systemInfoService;
+        //this.systemInfoService = systemInfoService;
+        this.clusterManager = clusterManager;
         this.raftConfig = raftConfig;
 
         LOG.info("Started ReplicatedChronicleEngine");
     }
 
-    // TODO can only obtain them later once server started. Same problem as with partition creation:
-    // Need separate raft management server
+    private void addKnownStream(PartitionInfo partition) {
+        var partitionName = partition.getPartitionName().getName();
+        val client = new EventStoreReplicationClient(
+                raftConfig,
+                partitionName,
+                partition.getRaftGroup());
+        eventStoreProvider.put(BufferedReplicatedEventStore.of(partitionName, client,
+                raftConfig.getEventStoreBufferSize(), raftConfig.getEventStoreBufferTimeout()));
+    }
+
     @Override
     protected void initStreams() {
+        List<PartitionInfo> partitions = null;
         List<String> streamNames = null;
         try {
-            streamNames = getStreamNames();
-            for (String name : streamNames) {
-                val client = new EventStoreReplicationClient(raftConfig, name);
-                eventStoreProvider.put(BufferedReplicatedEventStore.of(name, client,
-                        raftConfig.getEventStoreBufferSize(), raftConfig.getEventStoreBufferTimeout()));
+            partitions = getPartitions();
+            //streamNames = getStreamNames();
+            //for (String name : streamNames) {
+            for (PartitionInfo partition : partitions) {
+                addKnownStream(partition);
+//                var partitionName = partition.getPartitionName().getName();
+//                val client = new EventStoreReplicationClient(
+//                        raftConfig,
+//                        partitionName,
+//                        partition.getRaftGroup());
+//                eventStoreProvider.put(BufferedReplicatedEventStore.of(partitionName, client,
+//                        raftConfig.getEventStoreBufferSize(), raftConfig.getEventStoreBufferTimeout()));
             }
         } catch (IOException | ExecutionException | InterruptedException e) {
             e.printStackTrace();
@@ -66,12 +89,25 @@ public class ReplicatedChronicleEngine extends BaseChronicleEngine<BufferedRepli
 
     @Override
     public List<String> getStreamNames() throws IOException, ExecutionException, InterruptedException {
-        // TODO this is something that must be done by clusterManagementStateMachine via client
+        LOG.info("Requesting stream names");
+        //val raftGroups = clusterManager.listPartitions(EventStoreStateMachine.class).stream().map(PartitionInfo::getRaftGroup).collect(Collectors.toList());
+        val partitionNames = clusterManager.listPartitions(EventStoreStateMachine.class).stream().map(PartitionInfo::getPartitionName).collect(Collectors.toList());
+        return partitionNames.stream().map(partitionName -> partitionName.getName()).collect(Collectors.toList());
 
-        val raftGroups = systemInfoService.getRaftGroups();
-        val eventStoreRaftGroups = RaftGroupUtil.filterRaftGroupsByStateMachine(raftGroups, EventStoreStateMachine.class);
-        val streamNames = RaftGroupUtil.getPartitionNamesFromRaftGroupInfos(eventStoreRaftGroups);
-        return streamNames;
+        //val eventStoreRaftGroups = RaftGroupUtil.filterRaftGroupsByStateMachine(raftGroups, EventStoreStateMachine.class);
+        //val streamNames = RaftGroupUtil.getPartitionNamesFromRaftGroupInfos(eventStoreRaftGroups);
+        //return streamNames;
+    }
+
+    public List<PartitionInfo> getPartitions() throws IOException, ExecutionException, InterruptedException {
+        LOG.info("Requesting partitions");
+        //val raftGroups = clusterManager.listPartitions(EventStoreStateMachine.class).stream().map(PartitionInfo::getRaftGroup).collect(Collectors.toList());
+        val partitions = clusterManager.listPartitions(EventStoreStateMachine.class);
+        return partitions;
+
+        //val eventStoreRaftGroups = RaftGroupUtil.filterRaftGroupsByStateMachine(raftGroups, EventStoreStateMachine.class);
+        //val streamNames = RaftGroupUtil.getPartitionNamesFromRaftGroupInfos(eventStoreRaftGroups);
+        //return streamNames;
     }
 
     @Override
@@ -83,9 +119,16 @@ public class ReplicatedChronicleEngine extends BaseChronicleEngine<BufferedRepli
     @Override
     public synchronized BufferedReplicatedEventStore registerStream(String name, EventSchema schema) throws IOException {
         // TODO allow eventSchemas by protobuf
-        // TODO register a new raft group using managementClient
 
-        throw new UnsupportedOperationException("Currently not implemented");
+        //throw new UnsupportedOperationException("Currently not implemented");
+        var partitionInfo = clusterManager.registerPartition(
+                EventStoreStateMachine.class,
+                name,
+                3);
+
+        // add to known streams
+
+        return null;
     }
 
     @Override

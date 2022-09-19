@@ -23,7 +23,8 @@ const useStyles = theme => ({
     },
     serverTitle: {
         marginBottom: 14,
-        fontSize: "16px"
+        fontSize: "16px",
+        marginTop: 28
     },
     stateMachineTitle: {
         margin: "14px 0",

@@ -3,6 +3,7 @@ package de.umr.raft.raftlogreplicationdemo.replication.impl.clients;
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.metadata.MetadataOperationMessage;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterManagementMultiRaftServer;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterManagementServer;
 import org.apache.ratis.protocol.RaftGroup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -35,12 +36,14 @@ public class ClusterMetadataReplicationClient extends RaftReplicationClient<Meta
 
     @Override
     protected UUID getRaftGroupUUID() {
-        return UUID.nameUUIDFromBytes((String.format("%s:metadata", ClusterManagementMultiRaftServer.SERVER_NAME)).getBytes(StandardCharsets.UTF_8));
+        //return UUID.nameUUIDFromBytes((String.format("%s:metadata", ClusterManagementMultiRaftServer.SERVER_NAME)).getBytes(StandardCharsets.UTF_8));
+        return ClusterManagementServer.META_GROUP_UUID;
     }
 
     @Override
     protected RaftGroup getRaftGroup(UUID raftGroupUUID) {
         return raftConfig.getManagementRaftGroup(getRaftGroupUUID());
+        //return clusterManagementServer.getMetadataRaftGroup();
     }
 
     @Autowired

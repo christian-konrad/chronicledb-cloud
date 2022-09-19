@@ -21,13 +21,11 @@ public class PartitionName {
     // to change over time. We should account for this with an
     // API which can naturally evolve.
 
-    // TODO do we need serverName?
-    @Getter @NonNull final String serverName;
-    // TODO include state machine name?
+    @Getter @NonNull final String stateMachineClassName;
     @Getter @NonNull final String name;
 
     public String getFullyQualifiedName() {
-        return serverName + ":" + name;
+        return stateMachineClassName + ":" + name;
     }
 
     @Override public int hashCode() {
@@ -46,10 +44,18 @@ public class PartitionName {
         return PartitionName.of(parts[0], parts[1]);
     }
     public static PartitionName of(PartitionNameProto partitionName) {
-        return PartitionName.of(partitionName.getServerName(), partitionName.getName());
+        return PartitionName.of(partitionName.getStateMachineClassName(), partitionName.getName());
     }
 
-//    public static PartitionName parseFrom(ByteString partitionName)
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PartitionName that = (PartitionName) o;
+        return stateMachineClassName.equals(that.stateMachineClassName) && name.equals(that.name);
+    }
+
+    //    public static PartitionName parseFrom(ByteString partitionName)
 //            throws InvalidProtocolBufferException {
 //        RaftProtos.PartitionNameProto partitionNameProto = RaftProtos.PartitionNameProto.parseFrom(logName);
 //        return new PartitionName(partitionNameProto.getStateMachineClassName(), partitionNameProto.getName());

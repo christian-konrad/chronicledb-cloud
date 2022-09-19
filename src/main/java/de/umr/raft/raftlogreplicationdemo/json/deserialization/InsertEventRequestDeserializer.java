@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.Map;
 
 
-/**
- * 
- */
+
+// TODO start again once cluster management works
+
 @JsonComponent
 public class InsertEventRequestDeserializer extends JsonDeserializer<InsertEventRequest> {
 

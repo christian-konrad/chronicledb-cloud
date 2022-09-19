@@ -2,6 +2,7 @@ package de.umr.raft.raftlogreplicationdemo.controllers.counter;
 
 import de.umr.raft.raftlogreplicationdemo.models.counter.CreateCounterRequest;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
+import de.umr.raft.raftlogreplicationdemo.replication.api.PartitionInfo;
 import de.umr.raft.raftlogreplicationdemo.services.impl.ReplicatedCounterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,7 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-//@RestController
+@RestController
 @RequestMapping("/api/counter/replicated")
 public class ReplicatedCounterController {
 
@@ -39,7 +40,7 @@ public class ReplicatedCounterController {
     // TODO POST  /api/counter/replicated?partition-size=3 creates new raft group with 3 peers
     @PostMapping("")
     @ResponseStatus(value = HttpStatus.OK)
-    public RaftGroupInfo createNewCounter(@RequestBody CreateCounterRequest createCounterRequest) throws IOException, ExecutionException, InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    public PartitionInfo createNewCounter(@RequestBody CreateCounterRequest createCounterRequest) throws IOException, ExecutionException, InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         return counterService.createNewCounter(createCounterRequest).get();
     }
 

@@ -11,6 +11,7 @@ import org.springframework.boot.ApplicationRunner;
 
 import java.lang.reflect.InvocationTargetException;
 
+@Deprecated
 abstract class MultiRaftReplicationServerStartupRunner<ReplicationServer extends MultiRaftReplicationServer> implements ApplicationRunner {
 
     protected static final Logger LOG =

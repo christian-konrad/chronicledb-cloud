@@ -13,12 +13,14 @@ message RaftPeerProto {
 
 message RaftGroupProto {
     bytes id = 1; // id of the group
-    repeated RaftPeerProto peers = 2; //list of the peers
+    string uuid = 2;
+    string name = 3;
+    repeated RaftPeerProto peers = 4; //list of the peers
 }
 
 message PartitionNameProto {
     string name = 1;
-    string serverName = 2;
+    string stateMachineClassName = 2;
 }
 
 enum PartitionState {
@@ -28,18 +30,34 @@ enum PartitionState {
     DETACHED = 3;
 }
 
+enum ConnectionState {
+    CONNECTED = 0;
+    INTERRUPTED = 1;
+    DISCONNECTED = 2;
+}
+
 message PartitionInfoProto {
     PartitionNameProto partitionName = 1;
     RaftGroupProto raftGroup = 2;
     PartitionState partitionState = 3;
 }
 
+message NodeHealthProto {
+    string peerId = 1;
+    ConnectionState connectionState = 2;
+    string heartbeat = 3;
+}
+
 enum ClusterManagementOperationType {
     NULL = 0; // null/noop operation that does nothing
     REGISTER_PARTITION = 1; // registers a new partition for a set of peers and a state machine
-    DETACH_PARTITION = 2; // detaches a partition without deleting its persisted contents
-    LIST_PARTITIONS = 3; // lists all registered partitions (all or for a specific state machine)
-    HEARTBEAT = 4; // sends a heartbeat to let the cluster know of this peer
+    INSTANTIATE_PARTITION = 2; // internal
+    ACKNOWLEDGE_PARTITION_REGISTRATION = 3; // internal
+    DETACH_PARTITION = 4; // detaches a partition without deleting its persisted contents
+    LIST_PARTITIONS = 5; // lists all registered partitions (all or for a specific state machine)
+    HEARTBEAT = 6; // sends a heartbeat to let the cluster know of this peer
+    GET_CLUSTER_HEALTH = 7; // returns the health of the cluster (and its nodes)
+    GET_STATEMACHINE_FOR_RAFT_GROUP = 8; // returns the state machine class name registered for a raft group
 }
 
 message RegisterPartitionRequestProto {
@@ -49,8 +67,21 @@ message RegisterPartitionRequestProto {
     uint32 replication_factor = 3; // determines number of nodes to include into this partition. Min 3, max # of available nodes
 }
 
+// instantiates the state machine
+message InstantiatePartitionRequestProto {
+    string statemachine_classname = 1; // name of the state machine class
+    string partition_name = 2; // name of the partition to instantiate. Must be unique per statemachine
+}
+
+// acknowledges the instantiation
+message AcknowledgePartitionRegistrationProto {
+    string statemachine_classname = 1; // name of the state machine class
+    string partition_name = 2; // name of the partition to acknowledge. Must be unique per statemachine
+}
+
 message DetachPartitionRequestProto {
-    string partition_name = 1; // name of the partition
+    string statemachine_classname = 1; // name of the state machine class
+    string partition_name = 2; // name of the partition to detach. Must be unique per statemachine
 }
 
 message ListPartitionsRequestProto {
@@ -61,12 +92,22 @@ message HeartbeatRequestProto {
     RaftPeerProto peer = 1; // the peer sending the heartbeat
 }
 
+message GetClusterHealthRequestProto {}
+
+message GetStateMachineForRaftGroupProto {
+    bytes raft_group_id = 1;
+}
+
 message ClusterManagementRequestProto {
     oneof Type {
         RegisterPartitionRequestProto registerPartitionRequest = 1;
-        DetachPartitionRequestProto detachPartitionRequest = 2;
-        ListPartitionsRequestProto listPartitionsRequest = 3;
-        HeartbeatRequestProto heartbeatRequestProto = 4;
+        InstantiatePartitionRequestProto instantiatePartitionRequest = 2;
+        AcknowledgePartitionRegistrationProto acknowledgePartitionRegistrationRequest = 3;
+        DetachPartitionRequestProto detachPartitionRequest = 4;
+        ListPartitionsRequestProto listPartitionsRequest = 5;
+        HeartbeatRequestProto heartbeatRequestProto = 6;
+        GetClusterHealthRequestProto getClusterHealthRequestProto = 7;
+        GetStateMachineForRaftGroupProto getStateMachineForRaftGroupRequest = 8;
     }
 }
 
@@ -87,8 +128,17 @@ message HeartbeatResponseProto {
     // empty message
 }
 
+message ClusterHealthResponseProto {
+    bool isHealthy = 1;
+    repeated NodeHealthProto node_info = 2;
+}
+
 message ListPartitionsResponseProto {
     repeated PartitionInfoProto partition_info = 1;
+}
+
+message GetStateMachineForRaftGroupResponseProto {
+    string state_machine_classname = 1;
 }
 
 message ClusterManagementResponseProto {
@@ -97,6 +147,8 @@ message ClusterManagementResponseProto {
         DetachPartitionResponseProto detachPartitionResponse = 2;
         ListPartitionsResponseProto listPartitionsResponse = 3;
         HeartbeatResponseProto heartbeatResponse = 4;
+        ClusterHealthResponseProto clusterHealthResponse = 5;
+        GetStateMachineForRaftGroupResponseProto getStateMachineForRaftGroupResponse = 6;
     }
 }
 

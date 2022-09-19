@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 //@Component
+@Deprecated
 public class ClusterManagementMultiRaftServer extends MultiRaftReplicationServer {
 
     // TODO AppLogicServer

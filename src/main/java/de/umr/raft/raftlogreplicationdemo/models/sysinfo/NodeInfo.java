@@ -1,5 +1,6 @@
 package de.umr.raft.raftlogreplicationdemo.models.sysinfo;
 
+import de.umr.raft.raftlogreplicationdemo.replication.api.PartitionInfo;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata.ReplicatedMetadataMap;
 import lombok.*;
 import org.apache.ratis.protocol.RaftPeer;
@@ -16,6 +17,7 @@ public class NodeInfo {
     @Getter @NonNull private final String host;
     @Getter private final String httpPort;
     @Getter @NonNull private final String metadataPort;
+    @Getter private final String replicationPort;
     @Getter private final String storagePath;
     @Getter private final String localHostAddress;
     @Getter private final String localHostName;
@@ -28,6 +30,7 @@ public class NodeInfo {
     @Getter private final String totalDiskSpace;
     @Getter private final String usableDiskSpace;
     @Getter private final String heartbeat;
+    @Getter private final String health;
 
     public static NodeInfo of(RaftPeer raftPeer) {
         val raftPeerHostAndPort = raftPeer.getAddress().split(":");
@@ -40,11 +43,12 @@ public class NodeInfo {
                 .build();
     }
 
-    public static NodeInfo of(ReplicatedMetadataMap replicatedMetaDataMap) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
+    public static NodeInfo of(ReplicatedMetadataMap replicatedMetaDataMap, NodeHealth nodeHealth) throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
         val nodeId = replicatedMetaDataMap.get("nodeId");
         val localHostAddress = replicatedMetaDataMap.get("localHostAddress");
         val httpPort = replicatedMetaDataMap.get("httpPort");
         val metadataPort = replicatedMetaDataMap.get("metadataPort");
+        val replicationPort = replicatedMetaDataMap.get("replicationPort");
         val storagePath = replicatedMetaDataMap.get("storagePath");
         val localHostName = replicatedMetaDataMap.get("localHostName");
         val remoteHostAddress = replicatedMetaDataMap.get("remoteHostAddress");
@@ -55,7 +59,8 @@ public class NodeInfo {
         val javaVersion = replicatedMetaDataMap.get("javaVersion");
         val totalDiskSpace = replicatedMetaDataMap.get("totalDiskSpace");
         val usableDiskSpace = replicatedMetaDataMap.get("usableDiskSpace");
-        val heartbeat = replicatedMetaDataMap.get("heartbeat");
+        val heartbeat = nodeHealth.getHeartbeat();
+        val health = nodeHealth.getConnectionState();
 
         // TODO more params
         return new NodeInfoBuilder()
@@ -63,6 +68,7 @@ public class NodeInfo {
                 .host(localHostAddress)
                 .httpPort(httpPort)
                 .metadataPort(metadataPort)
+                .replicationPort(replicationPort)
                 .storagePath(storagePath)
                 .localHostAddress(localHostAddress)
                 .localHostName(localHostName)
@@ -75,6 +81,7 @@ public class NodeInfo {
                 .totalDiskSpace(totalDiskSpace)
                 .usableDiskSpace(usableDiskSpace)
                 .heartbeat(heartbeat)
+                .health(health.name())
                 .build();
     }
 

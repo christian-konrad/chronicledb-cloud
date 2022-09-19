@@ -23,12 +23,12 @@ public class HeartbeatOperationExecutor implements ClusterManagementTransactionO
     private final ClusterManagementOperationProto clusterManagementOperation;
 
     @Override
-    public CompletableFuture<ClusterManagementOperationResultProto> apply(ClusterStateManager clusterState) {
+    public CompletableFuture<ClusterManagementOperationResultProto> apply(ClusterStateManager clusterStateManager) {
         var request = clusterManagementOperation.getRequest().getHeartbeatRequestProto();
 
         var peerProto = request.getPeer();
 
-        var resultFuture = clusterState.handleHeartbeat(
+        var resultFuture = clusterStateManager.handleHeartbeat(
                 RaftPeer.newBuilder()
                      .setAddress(peerProto.getAddress())
                      .setId(peerProto.getId())

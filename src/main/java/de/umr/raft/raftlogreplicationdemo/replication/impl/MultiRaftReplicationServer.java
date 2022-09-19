@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Deprecated
 public abstract class MultiRaftReplicationServer implements IReplicationServer.Raft {
 
     protected static final Logger LOG =
@@ -150,8 +151,8 @@ public abstract class MultiRaftReplicationServer implements IReplicationServer.R
         RaftPeer currentPeer =
                 baseRaftGroup.getPeer(RaftPeerId.valueOf(raftConfig.getCurrentPeerId()));
 
-        LOG.info("Current peer id: {}", raftConfig.getCurrentPeerId());
-        LOG.info("Current peer address: {}", currentPeer.getAddress());
+        LOG.info("[Mngmt Server] Current peer id: {}", raftConfig.getCurrentPeerId());
+        LOG.info("[Mngmt Server] Current peer address: {}", currentPeer.getAddress());
 
         val properties = new RaftProperties();
 

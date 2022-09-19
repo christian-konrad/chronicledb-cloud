@@ -14,9 +14,8 @@ import org.springframework.boot.jackson.JsonComponent;
 import java.io.IOException;
 
 
-/**
- * 
- */
+// TODO start again once cluster management works
+
 @JsonComponent
 public class InsertEventRequestSerializer extends JsonSerializer<InsertEventRequest> {
 

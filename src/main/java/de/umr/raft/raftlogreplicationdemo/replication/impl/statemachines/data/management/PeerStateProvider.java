@@ -1,6 +1,7 @@
 package de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.management;
 
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
+import de.umr.raft.raftlogreplicationdemo.replication.api.PartitionInfo;
 import de.umr.raft.raftlogreplicationdemo.replication.api.PeerState;
 import org.apache.ratis.protocol.RaftPeer;
 import org.apache.ratis.util.Daemon;
@@ -8,8 +9,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class PeerStateProvider implements Iterable<PeerState> {
 
@@ -34,7 +38,35 @@ public class PeerStateProvider implements Iterable<PeerState> {
     }
 
     private final Map<RaftPeer, PeerState> peerStates = new HashMap<>();
+//
+//    // At the same time, manage minHeap queue for load balancing partitions across the peers
+//    private PriorityBlockingQueue<PartitionsPerPeer> balancedPeers = new PriorityBlockingQueue<PartitionsPerPeer>();
+//
+//    static class PartitionsPerPeer implements Comparable {
+//        private RaftPeer peer;
+//        private Set<PartitionInfo> partitions = new HashSet<>();
+//
+//        PartitionsPerPeer(RaftPeer peer) {
+//            this.peer = peer;
+//        }
+//
+//        public Set<PartitionInfo> getPartitions() {
+//            return partitions;
+//        }
+//
+//        public RaftPeer getPeer() {
+//            return peer;
+//        }
+//
+//        @Override
+//        public int compareTo(Object o) {
+//            return partitions.size() - ((PartitionsPerPeer) o).partitions.size();
+//        }
+//    }
 
+    // TODO peer ports on app logic server?
+
+    // TODO also allow adding partitions here
     public void update(PeerState peerState) {
         var peer = peerState.getRaftPeer();
         var previousState = peerStates.get(peer);
@@ -47,7 +79,7 @@ public class PeerStateProvider implements Iterable<PeerState> {
             handleConnectionStateChanged(peer, newConnectionState);
         }
 
-        LOG.info("Peer states: {}", peerStates);
+        // LOG.info("Peer states: {}", peerStates);
     }
 
     private void handleConnectionStateChanged(RaftPeer peer, PeerState.ConnectionState connectionState) {
@@ -95,6 +127,14 @@ public class PeerStateProvider implements Iterable<PeerState> {
     @Override
     public Iterator<PeerState> iterator() {
         return peerStates.values().iterator();
+    }
+
+    public Stream<PeerState> stream() {
+        return StreamSupport.stream(spliterator(), false);
+    }
+
+    public int size() {
+        return peerStates.size();
     }
 
     @Override

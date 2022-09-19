@@ -8,6 +8,7 @@ import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.ma
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.apache.ratis.protocol.RaftGroupId;
 import org.apache.ratis.protocol.RaftPeer;
 import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
@@ -35,6 +36,7 @@ public class ClusterManagementOperationMessage implements ExecutableMessage<Clus
         switch (clusterManagementOperation.getOperationType()) {
             case REGISTER_PARTITION:
             case DETACH_PARTITION:
+            case ACKNOWLEDGE_PARTITION_REGISTRATION:
             case HEARTBEAT:
                 return true;
         }
@@ -72,12 +74,41 @@ public class ClusterManagementOperationMessage implements ExecutableMessage<Clus
             return ClusterManagementOperationMessage.of(metadataOperation);
         }
 
-        public static ClusterManagementOperationMessage createDetachPartitionOperationMessage(String partitionName) {
+        public static ClusterManagementOperationMessage createProvisionPartitionOperationMessage(String stateMachineClassname, String partitionName) {
+            val metadataOperation = ClusterManagementOperationProto.newBuilder()
+                    .setOperationType(ClusterManagementOperationType.INSTANTIATE_PARTITION)
+                    .setRequest(ClusterManagementRequestProto.newBuilder()
+                            .setInstantiatePartitionRequest(InstantiatePartitionRequestProto.newBuilder()
+                                    .setStatemachineClassname(stateMachineClassname)
+                                    .setPartitionName(partitionName)
+                                    .build())
+                            .build())
+                    .build();
+
+            return ClusterManagementOperationMessage.of(metadataOperation);
+        }
+
+        public static ClusterManagementOperationMessage createAcknowledgePartitionRegistrationOperationMessage(String stateMachineClassname, String partitionName) {
+            val metadataOperation = ClusterManagementOperationProto.newBuilder()
+                    .setOperationType(ClusterManagementOperationType.ACKNOWLEDGE_PARTITION_REGISTRATION)
+                    .setRequest(ClusterManagementRequestProto.newBuilder()
+                            .setAcknowledgePartitionRegistrationRequest(AcknowledgePartitionRegistrationProto.newBuilder()
+                                    .setStatemachineClassname(stateMachineClassname)
+                                    .setPartitionName(partitionName)
+                                    .build())
+                            .build())
+                    .build();
+
+            return ClusterManagementOperationMessage.of(metadataOperation);
+        }
+
+        public static ClusterManagementOperationMessage createDetachPartitionOperationMessage(String stateMachineClassname, String partitionName) {
             val metadataOperation = ClusterManagementOperationProto.newBuilder()
                     .setOperationType(ClusterManagementOperationType.DETACH_PARTITION)
                     .setRequest(ClusterManagementRequestProto.newBuilder()
                             .setDetachPartitionRequest(DetachPartitionRequestProto.newBuilder()
                                     .setPartitionName(partitionName)
+                                    .setStatemachineClassname(stateMachineClassname)
                                     .build())
                             .build())
                     .build();
@@ -108,6 +139,31 @@ public class ClusterManagementOperationMessage implements ExecutableMessage<Clus
                                             .setId(raftPeer.getId().toByteString())
                                             .setAddress(raftPeer.getAddress())
                                             .build())
+                                    .build())
+                            .build())
+                    .build();
+
+            return ClusterManagementOperationMessage.of(metadataOperation);
+        }
+
+        public static ClusterManagementOperationMessage createGetHealthOperationMessage() {
+            val metadataOperation = ClusterManagementOperationProto.newBuilder()
+                    .setOperationType(ClusterManagementOperationType.GET_CLUSTER_HEALTH)
+                    .setRequest(ClusterManagementRequestProto.newBuilder()
+                            .setGetClusterHealthRequestProto(GetClusterHealthRequestProto.newBuilder()
+                                    .build())
+                            .build())
+                    .build();
+
+            return ClusterManagementOperationMessage.of(metadataOperation);
+        }
+
+        public static ClusterManagementOperationMessage getStateMachineForRaftGroupOperationMessage(RaftGroupId raftGroupId) {
+            val metadataOperation = ClusterManagementOperationProto.newBuilder()
+                    .setOperationType(ClusterManagementOperationType.GET_STATEMACHINE_FOR_RAFT_GROUP)
+                    .setRequest(ClusterManagementRequestProto.newBuilder()
+                            .setGetStateMachineForRaftGroupRequest(GetStateMachineForRaftGroupProto.newBuilder()
+                                    .setRaftGroupId(raftGroupId.toByteString())
                                     .build())
                             .build())
                     .build();

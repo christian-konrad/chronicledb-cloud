@@ -1,5 +1,6 @@
 package de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.clustermanagement;
 
+import de.umr.raft.raftlogreplicationdemo.replication.api.PartitionInfo;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.ClusterManagementOperationProto;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.ClusterManagementOperationResultProto;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.ClusterManagementOperationType;
@@ -25,17 +26,18 @@ public class DetachPartitionOperationExecutor implements ClusterManagementTransa
     private final ClusterManagementOperationProto clusterManagementOperation;
 
     @Override
-    public CompletableFuture<ClusterManagementOperationResultProto> apply(ClusterStateManager clusterState) {
+    public CompletableFuture<ClusterManagementOperationResultProto> apply(ClusterStateManager clusterStateManager) {
         var request = clusterManagementOperation.getRequest().getDetachPartitionRequest();
 
-         var resultFuture = clusterState.detachPartition(
-              request.getPartitionName()
+         var resultFuture = clusterStateManager.detachPartition(
+                 request.getStatemachineClassname(),
+                 request.getPartitionName()
          );
 
         return createClusterManagementOperationResult(resultFuture);
     }
 
-    private CompletableFuture<ClusterManagementOperationResultProto> createClusterManagementOperationResult(CompletableFuture<Void> resultFuture) {
+    private CompletableFuture<ClusterManagementOperationResultProto> createClusterManagementOperationResult(CompletableFuture<PartitionInfo> resultFuture) {
         return resultFuture.thenApply(o ->
                 ClusterManagementOperationResultProto.newBuilder()
                 .setOperationType(getOperationType())

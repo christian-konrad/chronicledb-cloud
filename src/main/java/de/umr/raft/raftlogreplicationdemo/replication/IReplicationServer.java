@@ -1,5 +1,7 @@
 package de.umr.raft.raftlogreplicationdemo.replication;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.ratis.protocol.Message;
 import org.apache.ratis.protocol.RaftClientReply;
 
@@ -14,5 +16,6 @@ public interface IReplicationServer {
 
         public void start() throws IOException, ExecutionException, InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
         // TODO expose state machine methods?
+
     }
 }

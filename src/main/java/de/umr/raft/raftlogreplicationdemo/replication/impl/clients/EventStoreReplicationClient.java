@@ -6,6 +6,7 @@ import de.umr.event.Event;
 import de.umr.event.schema.EventSchema;
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.eventstore.EventStoreOperationMessage;
+import org.apache.ratis.protocol.RaftGroup;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -57,7 +58,7 @@ public class EventStoreReplicationClient extends PartitionedRaftReplicationClien
     // TODO query message
 
     @Autowired
-    public EventStoreReplicationClient(RaftConfig raftConfig, String streamId) {
-        super(raftConfig, streamId);
+    public EventStoreReplicationClient(RaftConfig raftConfig, String streamId, RaftGroup raftGroup) {
+        super(raftConfig, streamId, raftGroup);
     }
 }

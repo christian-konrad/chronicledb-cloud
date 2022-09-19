@@ -4,8 +4,10 @@ import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.models.sysinfo.RaftGroupInfo;
 import de.umr.raft.raftlogreplicationdemo.replication.IReplicationServer;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterMetadataReplicationClient;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.clustermanagement.ClusterManager;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.metadata.ReplicatedMetadataMap;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.ClusterManagementStateMachine;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.ClusterMetadataStateMachine;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.providers.StateMachineProvider;
 import lombok.Getter;
 import lombok.val;
@@ -36,6 +38,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @Component
 public class ClusterManagementServer implements IReplicationServer.Raft {
@@ -45,9 +48,11 @@ public class ClusterManagementServer implements IReplicationServer.Raft {
     private static final Logger LOG =
         LoggerFactory.getLogger(ClusterManagementServer.class);
 
-    private final RaftServer raftServer;
+    @Getter private final RaftServer raftServer;
     private final RaftConfig raftConfig;
+    private final ClusterManager clusterManager;
     private StateMachine clusterManagementStateMachine;
+    private StateMachine clusterMetadataStateMachine;
 
     @Getter private boolean isRunning = false;
 
@@ -57,9 +62,14 @@ public class ClusterManagementServer implements IReplicationServer.Raft {
     public static final UUID BASE_GROUP_UUID = UUID.nameUUIDFromBytes(BASE_GROUP_NAME.getBytes(StandardCharsets.UTF_8));
     public static final RaftGroupId BASE_GROUP_ID = RaftGroupId.valueOf(BASE_GROUP_UUID);
 
+    public static final String META_GROUP_NAME = SERVER_NAME + ":meta";
+    public static final UUID META_GROUP_UUID = UUID.nameUUIDFromBytes(META_GROUP_NAME.getBytes(StandardCharsets.UTF_8));
+    public static final RaftGroupId META_GROUP_ID = RaftGroupId.valueOf(META_GROUP_UUID);
+
     @Autowired
-    public ClusterManagementServer(RaftConfig raftConfig) throws InvocationTargetException, InstantiationException, IllegalAccessException, IOException, NoSuchMethodException {
+    public ClusterManagementServer(RaftConfig raftConfig, ClusterManager clusterManager) throws InvocationTargetException, InstantiationException, IllegalAccessException, IOException, NoSuchMethodException {
         this.raftConfig = raftConfig;
+        this.clusterManager = clusterManager;
         this.raftServer = buildRaftServer();
     }
 
@@ -70,10 +80,15 @@ public class ClusterManagementServer implements IReplicationServer.Raft {
         return raftConfig.getManagementRaftGroup(BASE_GROUP_UUID);
     }
 
+    public RaftGroup getMetadataRaftGroup() {
+        return raftConfig.getManagementRaftGroup(META_GROUP_UUID);
+    }
+
     private RaftServer buildRaftServer() throws IOException {
         RaftGroup baseRaftGroup = getBaseRaftGroup();
 
-        clusterManagementStateMachine = new ClusterManagementStateMachine(raftConfig);
+        clusterManagementStateMachine = new ClusterManagementStateMachine(raftConfig, clusterManager);
+        clusterMetadataStateMachine = new ClusterMetadataStateMachine();
 
         // find current peer object based on application parameter
         RaftPeer currentPeer =
@@ -105,11 +120,12 @@ public class ClusterManagementServer implements IReplicationServer.Raft {
                 .setStateMachineRegistry(raftGroupId -> {
                     if (raftGroupId.equals(BASE_GROUP_ID)) {
                         return clusterManagementStateMachine;
+                    } else if (raftGroupId.equals(META_GROUP_ID)) {
+                        return clusterMetadataStateMachine;
                     }
                     return null; // TODO error handling
                 })
                 .build();
-
         // TODO use raftServer.setConfiguration() for hot config changes ( new peers added etc. )
     }
 
@@ -131,7 +147,31 @@ public class ClusterManagementServer implements IReplicationServer.Raft {
     }
 
     public void start() throws IOException, ExecutionException, InterruptedException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        LOG.info("Attempt to start raft server");
         raftServer.start();
+
+        val metadataRaftGroup = getMetadataRaftGroup();
+
+        // TODO what happens on repeated calls of this?
+
+        val metaGroupRegistered = StreamSupport.stream(raftServer.getGroupIds().spliterator(), false).anyMatch(raftGroupId -> raftGroupId.equals(metadataRaftGroup.getGroupId()));
+
+        if (!metaGroupRegistered) {
+            createClient()
+                    .getGroupManagementApi(RaftPeerId.getRaftPeerId(raftConfig.getCurrentPeerId()))
+                    .add(metadataRaftGroup);
+
+            // TODO also do this on partition provisioning
+            clusterManager.broadcastRaftGroupInfo(
+                    ClusterManagementServer.SERVER_NAME,
+                    metadataRaftGroup.getGroupId().toString(),
+                    META_GROUP_UUID,
+                    META_GROUP_NAME,
+                    ClusterMetadataStateMachine.class.getCanonicalName(),
+                    raftConfig.getManagementPeersList().stream().map(raftPeer -> raftPeer.getId().toString()).collect(Collectors.toList()));
+        } else {
+            LOG.info("Meta group already registered");
+        }
 
         isRunning = true;
         LOG.info("Cluster meta quorum server started");

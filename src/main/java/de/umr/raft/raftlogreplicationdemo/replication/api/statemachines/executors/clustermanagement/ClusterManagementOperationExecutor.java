@@ -5,10 +5,7 @@ import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executor
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.executors.OperationExecutor;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.management.ClusterState;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.management.ClusterStateManager;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.clustermanagement.DetachPartitionOperationExecutor;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.clustermanagement.HeartbeatOperationExecutor;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.clustermanagement.ListPartitionsOperationExecutor;
-import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.clustermanagement.RegisterPartitionOperationExecutor;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.executors.clustermanagement.*;
 import org.apache.ratis.thirdparty.com.google.protobuf.Message;
 
 import java.util.concurrent.CompletableFuture;
@@ -21,12 +18,20 @@ public interface ClusterManagementOperationExecutor<ResultType extends Message> 
         switch (clusterManagementOperation.getOperationType()) {
             case REGISTER_PARTITION:
                 return RegisterPartitionOperationExecutor.of(clusterManagementOperation);
+            case INSTANTIATE_PARTITION:
+                return ProvisionPartitionOperationExecutor.of(clusterManagementOperation);
+            case ACKNOWLEDGE_PARTITION_REGISTRATION:
+                return AcknowledgePartitionRegistrationOperationExecutor.of(clusterManagementOperation);
             case DETACH_PARTITION:
                 return DetachPartitionOperationExecutor.of(clusterManagementOperation);
             case LIST_PARTITIONS:
                 return ListPartitionsOperationExecutor.of(clusterManagementOperation);
             case HEARTBEAT:
                 return HeartbeatOperationExecutor.of(clusterManagementOperation);
+            case GET_CLUSTER_HEALTH:
+                return GetClusterHealthOperationExecutor.of(clusterManagementOperation);
+            case GET_STATEMACHINE_FOR_RAFT_GROUP:
+                return GetStateMachineForRaftGroupOperationExecutor.of(clusterManagementOperation);
             case NULL:
             case UNRECOGNIZED:
             default:

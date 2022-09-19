@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.text.NumberFormat;
 
 //@Component
+@Deprecated
 @RequiredArgsConstructor(staticName = "of")
 public class MetadataUpdateStartupRunner implements ApplicationRunner {
 

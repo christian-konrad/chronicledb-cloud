@@ -11,13 +11,13 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-//@RestController
+@RestController
 @RequestMapping("/api/sys-info/performance")
 public class MeasurePerformanceController {
 
     @Autowired MeasureEventStorePerformanceService measureEventStorePerformanceService;
-    @Autowired MeasureCounterPerformanceService measureCounterPerformanceService;
-    @Autowired MeasureMetadataPerformanceService measureMetadataPerformanceService;
+    //@Autowired MeasureCounterPerformanceService measureCounterPerformanceService;
+    //@Autowired MeasureMetadataPerformanceService measureMetadataPerformanceService;
 
     // TODO remove crossOrigin later
     @CrossOrigin
@@ -55,36 +55,36 @@ public class MeasurePerformanceController {
     // TODO aggregate event
 
     // TODO remove crossOrigin later
-    @CrossOrigin
-    @GetMapping("/measure/counter/replicated/increment/{count}")
-    public String runIncrementReplicatedCounterMeasurements(@PathVariable Integer count, @RequestParam Optional<Integer> batchSize) throws IOException, ExecutionException, InterruptedException {
-        return measureCounterPerformanceService.runIncrementReplicatedCounterMeasurements(count, batchSize).get();
-    }
+//    @CrossOrigin
+//    @GetMapping("/measure/counter/replicated/increment/{count}")
+//    public String runIncrementReplicatedCounterMeasurements(@PathVariable Integer count, @RequestParam Optional<Integer> batchSize) throws IOException, ExecutionException, InterruptedException {
+//        return measureCounterPerformanceService.runIncrementReplicatedCounterMeasurements(count, batchSize).get();
+//    }
+//
+//    @GetMapping("/measure/counter/replicated/increment/sync/{count}")
+//    public String runIncrementReplicatedCounterSyncMeasurements(@PathVariable Integer count) throws IOException, ExecutionException, InterruptedException {
+//        return measureCounterPerformanceService.runIncrementReplicatedCounterSyncMeasurements(count).get();
+//    }
+//
+//    @GetMapping("/measure/counter/replicated/read")
+//    public String runReadReplicatedCounterMeasurements() throws IOException, ExecutionException, InterruptedException {
+//        return measureCounterPerformanceService.runReadReplicatedCounterMeasurements().get();
+//    }
+//
+//    @GetMapping("/measure/counter/standalone/increment/{count}")
+//    public String runIncrementStandaloneCounterMeasurements(@PathVariable Integer count) throws IOException, ExecutionException, InterruptedException {
+//        return measureCounterPerformanceService.runIncrementStandaloneCounterMeasurements(count).get();
+//    }
+//
+//    @GetMapping("/measure/counter/read")
+//    public String runReadStandaloneCounterMeasurements() throws IOException, ExecutionException, InterruptedException {
+//        return measureCounterPerformanceService.runReadStandaloneCounterMeasurements().get();
+//    }
 
-    @GetMapping("/measure/counter/replicated/increment/sync/{count}")
-    public String runIncrementReplicatedCounterSyncMeasurements(@PathVariable Integer count) throws IOException, ExecutionException, InterruptedException {
-        return measureCounterPerformanceService.runIncrementReplicatedCounterSyncMeasurements(count).get();
-    }
-
-    @GetMapping("/measure/counter/replicated/read")
-    public String runReadReplicatedCounterMeasurements() throws IOException, ExecutionException, InterruptedException {
-        return measureCounterPerformanceService.runReadReplicatedCounterMeasurements().get();
-    }
-
-    @GetMapping("/measure/counter/standalone/increment/{count}")
-    public String runIncrementStandaloneCounterMeasurements(@PathVariable Integer count) throws IOException, ExecutionException, InterruptedException {
-        return measureCounterPerformanceService.runIncrementStandaloneCounterMeasurements(count).get();
-    }
-
-    @GetMapping("/measure/counter/read")
-    public String runReadStandaloneCounterMeasurements() throws IOException, ExecutionException, InterruptedException {
-        return measureCounterPerformanceService.runReadStandaloneCounterMeasurements().get();
-    }
-
-    @GetMapping("/measure/metadata/get")
-    public String runGetMetadataMeasurements() throws IOException, ExecutionException, InterruptedException {
-        return measureMetadataPerformanceService.runGetMetadataMeasurements().get();
-    }
+//    @GetMapping("/measure/metadata/get")
+//    public String runGetMetadataMeasurements() throws IOException, ExecutionException, InterruptedException {
+//        return measureMetadataPerformanceService.runGetMetadataMeasurements().get();
+//    }
 
     // TODO also test non-replicated store
 

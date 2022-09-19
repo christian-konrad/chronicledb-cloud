@@ -2,6 +2,7 @@ package de.umr.raft.raftlogreplicationdemo.replication.impl.clients;
 
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.ExecutableMessage;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.ApplicationLogicServer;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.ClusterManagementMultiRaftServer;
 import lombok.Getter;
 import org.apache.ratis.protocol.RaftGroup;
@@ -15,6 +16,7 @@ import java.util.UUID;
 public abstract class PartitionedRaftReplicationClient<ExecutableMessageImpl extends ExecutableMessage> extends RaftReplicationClient<ExecutableMessageImpl> {
 
     @Getter private final String partitionId;
+    @Getter private final RaftGroup raftGroup;
 
     // TODO to know which partition, this client must ask meta cluster in advance
     // TODO even for having a singleton partition, must implement orchestration by meta cluster
@@ -29,7 +31,8 @@ public abstract class PartitionedRaftReplicationClient<ExecutableMessageImpl ext
     protected UUID getRaftGroupUUID() {
         // TODO should use SERVER_NAME:STATE_MACHINE_NAME:PARTITION_ID
         // TODO use the right server
-        return UUID.nameUUIDFromBytes((String.format("%s:%s", ClusterManagementMultiRaftServer.SERVER_NAME, partitionId)).getBytes(StandardCharsets.UTF_8));
+        //return UUID.nameUUIDFromBytes((String.format("%s:%s", ApplicationLogicServer.SERVER_NAME, partitionId)).getBytes(StandardCharsets.UTF_8));
+        return UUID.nameUUIDFromBytes(partitionId.getBytes(StandardCharsets.UTF_8));
     }
 
     // TODO should ask metaclient which nodes are participating in this group/partition
@@ -47,12 +50,23 @@ public abstract class PartitionedRaftReplicationClient<ExecutableMessageImpl ext
     // TODO uses all nodes, just for testing/developing; should use only replica.count nodes for partition
     @Override
     protected RaftGroup getRaftGroup(UUID raftGroupUUID) {
+        // TODO get the peers in from partition list
+        if (raftGroup != null) return raftGroup;
+
         return raftConfig.getManagementRaftGroup(getRaftGroupUUID());
+    }
+
+    @Autowired
+    public PartitionedRaftReplicationClient(RaftConfig raftConfig, String partitionId, RaftGroup raftGroup) {
+        super(raftConfig);
+        this.partitionId = partitionId;
+        this.raftGroup = raftGroup;
     }
 
     @Autowired
     public PartitionedRaftReplicationClient(RaftConfig raftConfig, String partitionId) {
         super(raftConfig);
         this.partitionId = partitionId;
+        this.raftGroup = null;
     }
 }

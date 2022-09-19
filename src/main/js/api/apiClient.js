@@ -48,7 +48,7 @@ class ApiClient {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ id: counterId })
+            body: JSON.stringify({ id: counterId, partitionsCount: partitions })
         });
         return response.json();
     }

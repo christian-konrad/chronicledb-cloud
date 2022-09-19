@@ -3,6 +3,8 @@ package de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines;
 import de.umr.raft.raftlogreplicationdemo.config.RaftConfig;
 import de.umr.raft.raftlogreplicationdemo.replication.api.proto.ClusterManagementOperationResultProto;
 import de.umr.raft.raftlogreplicationdemo.replication.api.statemachines.messages.clustermanagement.ClusterManagementOperationMessage;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.clients.ClusterManagementClient;
+import de.umr.raft.raftlogreplicationdemo.replication.impl.facades.clustermanagement.ClusterManager;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.management.ClusterState;
 import de.umr.raft.raftlogreplicationdemo.replication.impl.statemachines.data.management.ClusterStateManager;
 import org.apache.ratis.proto.RaftProtos;
@@ -11,6 +13,7 @@ import org.apache.ratis.thirdparty.com.google.protobuf.ByteString;
 import org.apache.ratis.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.*;
 
@@ -19,13 +22,16 @@ public class ClusterManagementStateMachine extends ExecutableMessageStateMachine
     private static final Logger LOG = LoggerFactory.getLogger(ClusterManagementStateMachine.class);
 
     private final RaftConfig raftConfig;
+    private final ClusterManager clusterManager;
 
     private final ClusterState clusterState;
     private final ClusterStateManager clusterStateManager;
 
-    public ClusterManagementStateMachine(RaftConfig raftConfig) {
+    public ClusterManagementStateMachine(RaftConfig raftConfig, ClusterManager clusterManager) {
         this.raftConfig = raftConfig;
-        clusterState = ClusterState.createUninitializedState(raftConfig);
+        this.clusterManager = clusterManager;
+        clusterState = ClusterState.createUninitializedState(raftConfig, clusterManager);
+        //clusterManagementClient = new ClusterManagementClient(raftConfig);
         clusterStateManager = ClusterStateManager.of(clusterState, getServer());
     }
 

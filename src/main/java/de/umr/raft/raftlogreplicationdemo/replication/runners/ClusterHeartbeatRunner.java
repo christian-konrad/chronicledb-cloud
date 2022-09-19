@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import static java.lang.System.currentTimeMillis;
 
 //@Component
+@Deprecated
 @RequiredArgsConstructor(staticName = "of")
 public class ClusterHeartbeatRunner implements ApplicationRunner {
 
